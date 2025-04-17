@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="../static/css/faq.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div class="header-top">
+        <div class="icon">
+          <a class="flag" href="/index"><img src="../static/img/logo.png" alt="" width="73px"></a>
+        </div>
+    
+        <div class="nav">
+          <a class="nav-item" href="/index">Главная</a>
+          <a class="nav-item" href="/faq">FAQ</a>
+          
+        </div>
+    
+        <script src="https://cdn.lordicon.com/lordicon-1.1.0.js"></script>
+        <div class="icons">
+          <div class="settings">
+            <script src="https://cdn.lordicon.com/lordicon-1.1.0.js"></script>
+            <div class="search">
+              <input type="search" placeholder="Type to search" class="search_input" id="searchInput">
+              <button>
+              
+                <i class="fa fa-search"><lord-icon src="https://cdn.lordicon.com/kkvxgpti.json" trigger="hover" style="width:46px;height:46px;color:#fff;"></lord-icon></i>
+              </button>
+            </div>
+          </div>
+          
+          
+          {% if not current_user.is_authenticated %}
+            <a class="animated-icon3"  href="/user_reg">
+              <lord-icon src="https://cdn.lordicon.com/kthelypq.json" trigger="hover" style="width:48px;height:48px"></lord-icon>
+            </a>
+          {% else %}
+            <a class="animated-icon3"  href="/private_office">
+              <lord-icon src="https://cdn.lordicon.com/kthelypq.json" trigger="hover" style="width:48px;height:48px"></lord-icon>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    <div class="container">
+        <h2>Часто задаваймые вопросы</h2>
+        <div class="accordion">
+          <div class="accordion-item">
+            <button id="accordion-button-1" aria-expanded="false"><span class="accordion-title">Что такое Цифровизация?</span><span class="icon" aria-hidden="true"></span></button>
+            <div class="accordion-content">
+              <p>Цифровизация - это процесс преобразования традиционных процессов, услуг и бизнес-моделей с использованием цифровых технологий. Это включает в себя автоматизацию, цифровые инструменты, анализ данных и цифровые платформы для улучшения эффективности, доступности и качества услуг.</p>
+            </div>
+          </div>
+          <div class="accordion-item">
+            <button id="accordion-button-2" aria-expanded="false"><span class="accordion-title">Есть ли Цифровизация в Казахстане?</span><span class="icon" aria-hidden="true"></span></button>
+            <div class="accordion-content">
+              <p>Да, в Казахстане активно происходит цифровизация, охватывающая различные сферы жизни и экономики, включая государственное управление, образование и здравоохранение.</p>
+            </div>
+          </div>
+          <div class="accordion-item">
+            <button id="accordion-button-3" aria-expanded="false"><span class="accordion-title">Как она проявляется?</span><span class="icon" aria-hidden="true"></span></button>
+            <div class="accordion-content">
+              <p>Цифровизация в Казахстане проявляется через создание электронных государственных сервисов, внедрение цифровых технологий в бизнес-процессы, развитие цифровой инфраструктуры, поддержку инновационных проектов и повышение доступности интернета и цифровых услуг для граждан.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+</body>
+</html>
+<script>
+    const items = document.querySelectorAll(".accordion button");
+
+function toggleAccordion() {
+  const itemToggle = this.getAttribute('aria-expanded');
+  
+  for (i = 0; i < items.length; i++) {
+    items[i].setAttribute('aria-expanded', 'false');
+  }
+  
+  if (itemToggle == 'false') {
+    this.setAttribute('aria-expanded', 'true');
+  }
+}
+
+items.forEach(item => item.addEventListener('click', toggleAccordion));
+</script>

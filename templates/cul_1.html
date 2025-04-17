@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ru">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title data-i18n="_">
+   Исторический центр
+  </title>
+  <script src="/static/js/translate.js" defer></script>
+  <style>
+   *:focus:not(:focus-visible) {
+    outline: none;
+  }
+    html {
+      scroll-behavior: smooth;
+    }
+    .body, html,map{
+      overflow-x:hidden;
+      
+    }
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f7f4ef;
+      color: #2f3e2f;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-image: url('../static/img/culture.jpg');
+      background-size: cover;
+      background-position: center;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      text-decoration: none;
+      color:white;
+    }
+    .header-button {
+      position: absolute;
+      bottom: 20px;
+      background-color: #f0cd9c;
+      color: #2f3e2f;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .container {
+      padding: 2rem;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 1rem;
+    }
+    .icons {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .icons div {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+    }
+    .route-point {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .route-point img {
+      width: 120px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .route-info h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .route-info p {
+      margin: 4px 0;
+      font-size: 14px;
+    }
+    .map {
+  width: 100%;
+  max-width: 900px;
+  height: 600px;
+  margin: 2rem auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.a_but
+{
+  text-decoration: none;
+  color:black;
+}
+.back-arrow {
+    display: inline-block;
+    font-size: 28px;
+    text-decoration: none;
+    color: #333;
+    padding: 10px;
+    transition: all 0.2s ease;
+  }
+  .back-arrow:hover {
+    color: #007BFF;
+    transform: translateX(-4px);
+  }
+  .route-done-btn {
+    background-color: #28a745;
+    color: white;
+    font-size: 18px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    user-select: none;
+  }
+
+  .route-done-btn:hover {
+    background-color: #218838;
+    transform: scale(1.05);
+  }
+
+  .route-done-btn:active {
+    transform: scale(0.98);
+  }
+
+  .route-done-btn.done {
+    background-color: #6c757d;
+    cursor: pointer;
+    transform: none;
+  }
+  .route-done-btn {
+    background-color: #4CAF50; /* Зеленый */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.route-done-btn.done {
+    background-color: #9E9E9E; /* Серый */
+    cursor: default;
+}
+
+
+
+  .route-fav-btn {
+    background-color: #ba0d0d;
+    color: white;
+    font-size: 18px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    user-select: none;
+  }
+
+  .route-fav-btn:hover {
+    background-color: #d33017;
+    transform: scale(1.05);
+  }
+
+  .route-fav-btn:active {
+    transform: scale(0.98);
+  }
+
+  .route-fav-btn.done {
+    background-color: #6c757d;
+    cursor: pointer;
+    transform: none;
+  }
+  .route-fav-btn {
+    background-color: #ec1e17; /* Зеленый */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.route-fav-btn.done {
+    background-color: #9E9E9E; /* Серый */
+    cursor: default;
+}
+  </style>
+ </head>
+ <body>
+  <header>
+   <button class="header-button" data-i18n="__">
+    <a class="a_but" data-i18n="__" href="#map">
+     Маршрут на карте
+    </a>
+   </button>
+  </header>
+  <div class="container">
+   <a data-i18n="" href="javascript:history.back()" style="font-size: 28px;">
+    ←
+   </a>
+   <h1 data-i18n="_">
+    О маршруте
+   </h1>
+   <p data-i18n="____________">
+    Погружение в прошлое Алматы сквозь старинные улицы, культовые здания и атмосферу прошлого века.
+   </p>
+   <div class="icons">
+    <div data-i18n="_">
+     ☕ Еда
+    </div>
+    <div data-i18n="_">
+     🧶 Пешком
+    </div>
+    <div data-i18n="_">
+     📷 Фото
+    </div>
+   </div>
+   <div class="route-point">
+    <img alt="Зелёный базар" src="../static/img/park.jpeg"/>
+    <div class="route-info">
+     <h3 data-i18n="_28_">
+      Парк 28 гвардейцев-панфиловцев
+     </h3>
+     <p data-i18n="______">
+      зелёное сердце старого города с памятниками героизму.
+     </p>
+     <p data-i18n="30_">
+      <strong data-i18n="30_">
+       30 мин.
+      </strong>
+     </p>
+    </div>
+   </div>
+   <div class="route-point">
+    <img alt="Чайхана" src="../static/img/sobor.jpeg"/>
+    <div class="route-info">
+     <h3 data-i18n="___">
+      Собор Вознесения (Зенковский собор)
+     </h3>
+     <p data-i18n="___">
+      деревянный храм, переживший землетрясение.
+     </p>
+     <p data-i18n="50_">
+      <strong data-i18n="50_">
+       50 мин.
+      </strong>
+     </p>
+    </div>
+   </div>
+   <div class="route-point">
+    <img alt="Фуд-траки" src="../static/img/music.jpg"/>
+    <div class="route-info">
+     <h3 data-i18n="___">
+      Музей народных музыкальных инструментов
+     </h3>
+     <p data-i18n="______">
+      уютное место с казахской культурой в звуках.
+     </p>
+     <p data-i18n="1_">
+      <strong data-i18n="1_">
+       1 ч.
+      </strong>
+     </p>
+    </div>
+   </div>
+   <button class="route-done-btn" data-i18n="__" id="cul_1">
+    ✔ Маршрут пройден
+   </button>
+   <button class="route-fav-btn" data-i18n="" id="cul_1_fav">
+    Понравился
+   </button>
+  </div>
+  <div class="map">
+   <iframe allowfullscreen="true" data-i18n="" frameborder="0" height="100%" id="map" src="https://yandex.kz/map-widget/v1/?lang=ru_RU&amp;scroll=true&amp;/?apikey=8ce69368-cb23-4ace-acfe-0e75d0a2318c/maps/ru/162/almaty/?ll=76.945001%2C43.249617&amp;mode=routes&amp;rtext=43.250152%2C76.944584~43.248846%2C76.945791~43.249390%2C76.946830~43.249655%2C76.947809~43.255200%2C76.946954~43.255315%2C76.943248~43.254013%2C76.943373~43.247333%2C76.941786~43.249167%2C76.943984~43.250205%2C76.944417&amp;rtt=pd&amp;ruri=~ymapsbm1%3A%2F%2Forg%3Foid%3D1067449150~ymapsbm1%3A%2F%2Forg%3Foid%3D148941022304~~~ymapsbm1%3A%2F%2Forg%3Foid%3D1091157901~ymapsbm1%3A%2F%2Forg%3Foid%3D24938488579~ymapsbm1%3A%2F%2Forg%3Foid%3D146629534558~ymapsbm1%3A%2F%2Forg%3Foid%3D128454894573~&amp;z=16.78
+  `    " width="100%">
+    &gt;
+   </iframe>
+  </div>
+ </body>
+</html>
+<script>
+ // Загрузка начального состояния
+  async function loadInitialState() {
+      try {
+          const response = await fetch('/get_current_user_state');
+          const data = await response.json();
+          
+          if (data.completed_routes) {
+              Object.entries(data.completed_routes).forEach(([routeId, isCompleted]) => {
+                  const button = document.getElementById(routeId);
+                  if (button) {
+                      button.textContent = isCompleted ? 'Спасибо!' : '✔ Маршрут пройден';
+                      button.classList.toggle('done', isCompleted);
+                  }
+              });
+          }
+      } catch (error) {
+          console.error("Ошибка загрузки состояния:", error);
+      }
+  }
+  
+  // Обработчик кликов
+  async function handleRouteClick(button) {
+      const routeId = button.id;
+      const isCurrentlyCompleted = button.classList.contains('done');
+      const newState = !isCurrentlyCompleted;
+      
+      try {
+          button.disabled = true;
+          
+          const response = await fetch('/update_route_state', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({
+                  route_id: routeId,
+                  new_state: newState
+              })
+          });
+          
+          const result = await response.json();
+          
+          if (result.status === "success") {
+              button.textContent = newState ? 'Спасибо!' : '✔ Маршрут пройден';
+              button.classList.toggle('done', newState);
+              console.log("Состояние обновлено:", result);
+          }
+      } catch (error) {
+          console.error("Ошибка обновления:", error);
+          // Возвращаем предыдущее состояние при ошибке
+          button.textContent = isCurrentlyCompleted ? 'Спасибо!' : '✔ Маршрут пройден';
+          button.classList.toggle('done', isCurrentlyCompleted);
+      } finally {
+          button.disabled = false;
+      }
+  }
+  
+  // Инициализация при загрузке страницы
+  document.addEventListener('DOMContentLoaded', () => {
+      loadInitialState();
+      
+      // Назначаем обработчики всем кнопкам
+      document.querySelectorAll('.route-done-btn').forEach(btn => {
+          btn.onclick = () => handleRouteClick(btn);
+      });
+  });
+</script>
+<script>
+ // Загрузка начального состояния
+  async function loadInitialStateFav() {
+    try {
+        const response = await fetch('/get_current_user_state_fav');
+        const data = await response.json();
+        
+        if (data.favourite_routes) {  // ← исправлено с completed_routes на favourite_routes
+            Object.entries(data.favourite_routes).forEach(([routeId, isFavourite]) => {
+                const button = document.getElementById(routeId);
+                if (button) {
+                    button.textContent = isFavourite ? 'в избранном ' : 'Понравился ';
+                    button.classList.toggle('done', isFavourite);
+                }
+            });
+        }
+    } catch (error) {
+        console.error("Ошибка загрузки состояния:", error);
+    }
+}
+  
+  // Обработчик кликов
+  async function handleRouteClickFav(button) {
+      const routeId = button.id;
+      const isCurrentlyFavourite = button.classList.contains('done');
+      const newState = !isCurrentlyFavourite;
+      
+      try {
+          button.disabled = true;
+          
+          const response = await fetch('/update_route_state_fav', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({
+                  route_id: routeId,
+                  new_state_fav: newState
+              })
+          });
+          
+          const result = await response.json();
+          
+          if (result.status === "success") {
+              button.textContent = newState ? 'в Избраном' : 'Понравился ';
+              button.classList.toggle('done', newState);
+              console.log("Состояние обновлено:", result);
+          }
+      } catch (error) {
+          console.error("Ошибка обновления:", error);
+          // Возвращаем предыдущее состояние при ошибке
+          button.textContent = isCurrentlyFavourite ? 'в Избраном' : 'Понравился ';
+          button.classList.toggle('done', isCurrentlyFavourite);
+      } finally {
+          button.disabled = false;
+      }
+  }
+  
+  // Инициализация при загрузке страницы
+  document.addEventListener('DOMContentLoaded', () => {
+      loadInitialStateFav();
+      
+      // Назначаем обработчики всем кнопкам
+      document.querySelectorAll('.route-fav-btn').forEach(btn => {
+          btn.onclick = () => handleRouteClickFav(btn);
+      });
+  });
+</script>

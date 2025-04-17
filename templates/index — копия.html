@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../static/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Tinos&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Gelasio:wght@600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    body {
+      background-color: #f5f5f0;
+      color: #333;
+    }
+    .header-top {
+      background-color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      flex-wrap: wrap;
+      position: relative;
+      overflow:hidden;
+    }
+    .burger {
+      display: none;
+      flex-direction: column;
+      cursor: pointer;
+      gap: 5px;
+      z-index: 11;
+    }
+    .burger div {
+      width: 25px;
+      height: 3px;
+      background-color: #333;
+      transition: all 0.3s ease;
+    }
+    nav {
+      display: flex;
+      gap: 0px;
+      align-items: center;
+    }
+    nav a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+    }
+    .nav-mobile {
+      display: none;
+      flex-direction: column;
+      background-color: white;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 250px;
+      padding: 80px 20px 20px;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      z-index: 10;
+      transition: transform 0.3s ease;
+      transform: translateX(-100%);
+    }
+    .nav-mobile.active {
+      transform: translateX(0);
+    }
+    .mobile-nav-content {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .nav-mobile .nav-item {
+      margin-bottom: 20px;
+      font-size: 1.2rem;
+      color: #333;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .mobile-icons {
+      margin-top: auto;
+      padding: 20px 0;
+    }
+    .search-mobile {
+      display: flex;
+      margin-bottom: 0px;
+      padding: 0;
+      border-bottom: 1px solid #eee;
+    }
+    .search-mobile input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-right: 5px;
+    }
+    .search-mobile button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    .nav-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 10px;
+    }
+    @media (max-width: 768px) {
+      .header-top {
+        padding: 15px 20px;
+      }
+      
+      .burger {
+        display: flex;
+      }
+      
+      nav {
+        display: none;
+      }
+      
+      
+      .nav-mobile {
+        display: flex;
+      }
+      
+      /* Анимация бургера при открытии */
+      .burger.active div:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+      }
+      
+      .burger.active div:nth-child(2) {
+        opacity: 0;
+      }
+      
+      .burger.active div:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+      }
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background-color: #f5f5f0;
+      color: #333;
+    }
+
+    .hero {
+      background: url('../static/img/mainpage.jpg') center/cover no-repeat;
+      min-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: white;
+      padding: 0 20px;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 15px;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      margin-bottom: 30px;
+    }
+
+    .hero .yakor-button {
+      padding: 12px 30px;
+      font-size: 1rem;
+      border: none;
+      background-color: #2e8b57;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .yakor {
+      text-decoration: none;
+      color: #f5f5f0;
+    }
+
+    .routes {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 60px 0;
+      gap: 40px;
+      padding: 0 20px;
+    }
+
+    .route-option {
+      background-color: white;
+      border-radius: 12px;
+      overflow: hidden;
+      width: 300px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+      cursor: pointer;
+    }
+
+    .route-option:hover {
+      transform: translateY(-10px);
+    }
+
+    .route-option img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+
+    .route-option .info {
+      padding: 20px;
+    }
+
+    .route-option h3 {
+      margin-bottom: 10px;
+    }
+
+    .popular-routes {
+  margin: 40px 20px;
+  text-align: center;
+}
+
+.popular-routes h2 {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+}
+
+/* ===== Мобильная версия ===== */
+@media (max-width: 767px) {
+  .popular-scroll {
+    display: flex;
+    gap: 20px;
+    overflow-x: scroll;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    padding: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .popular-card {
+    flex: 0 0 80%;
+    scroll-snap-align: center;
+  }
+}
+
+/* ===== Десктоп ===== */
+@media (min-width: 768px) {
+  .popular-scroll {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    overflow: hidden;
+  }
+
+  .popular-card {
+    flex: 0 0 220px;
+  }
+}
+
+.popular-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.popular-scroll::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.popular-card {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.popular-card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.popular-card .info {
+  padding: 15px;
+}
+
+.burger-container {
+  position: relative;
+  z-index: 101;
+}
+
+.burger {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 102;
+}
+
+@media (max-width: 768px) {
+  .header-top {
+    padding: 15px 20px 15px 0px; /* Добавляем отступ слева для бургера */
+  }
+}
+  /* Добавляем новые стили */
+  .mobile-search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .search-icon-mobile {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .search-mobile {
+    display: none;
+    margin-left: 10px;
+    flex-grow: 1;
+  }
+  
+  .search-mobile.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+  
+  .search-mobile input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    outline: none;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .mobile-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+  }
+  
+  .mobile-menu-overlay.active {
+    display: block;
+  }
+  .header-top {
+    padding: 0 20px; /* Добавляем отступы по бокам */
+  }
+
+  .icon {
+    display: flex; /* Всегда показываем логотип */
+    align-items:center;
+    justify-content: flex-end;
+    margin-left:auto;
+  }
+
+  .burger-container {
+    order: 1; /* Бургер слева */
+  }
+  @media (max-width: 768px) {
+    .icon img {
+      width: 53px; /* Уменьшаем размер логотипа на мобильных */
+      height: 40px;
+    }
+    /* Скрываем десктопную навигацию */
+    nav {
+      display: none;
+    }
+  }
+  </style>
+  <title>Digital.kz</title>
+</head>
+
+<body>
+    
+  <div class="header-top">
+    <div class="burger-container">
+      <div class="burger" onclick="toggleMenu()">
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
+    <nav>
+      <div class="icon">
+        <a class="flag" href="/index"><img src="../static/img/logo.png"  alt="" width="62px"></a>
+      </div>
+  
+      <div class="nav" style="padding:13px;padding-top:15px">
+        <a class="nav-item" href="/index">Главная</a>
+        <a class="nav-item" href="/faq">FAQ</a>
+      </div>
+  
+      <script src="https://cdn.lordicon.com/lordicon-1.1.0.js"></script>
+      <div class="icons">
+        <div class="settings" style="padding-top:3px">
+          <script src="https://cdn.lordicon.com/lordicon-1.1.0.js"></script>
+          <div class="search">
+            <input type="search" placeholder="Type to search" class="search_input" id="searchInput" style="margin-left:-10px">
+            <button>
+              <i class="fa fa-search"><lord-icon src="https://cdn.lordicon.com/kkvxgpti.json" trigger="hover" style="left:-16px; top:-7px;width:42px;height:42px;color:#fff;"></lord-icon></i>
+            </button>
+          </div>
+        </div>
+        <a class="animated-icon2" href="/favorits">
+          <lord-icon src="https://cdn.lordicon.com/xyboiuok.json" trigger="hover" style="width:42px;height:42px"></lord-icon> 
+        </a>
+        {% if not current_user.is_authenticated %}
+          <a class="animated-icon3" href="/user_reg">
+            <lord-icon src="https://cdn.lordicon.com/kthelypq.json" trigger="hover" style="width:42px;height:42px"></lord-icon>
+          </a>
+        {% else %}
+          <a class="animated-icon3" href="/private_office">
+            <lord-icon src="https://cdn.lordicon.com/kthelypq.json" trigger="hover" style="width:42px;height:42px"></lord-icon>
+          </a>
+        {% endif %}
+      </div>
+    </nav>
+    
+    <div class="icon">
+        <a class="animated-icon2" href="/favorits">
+          <lord-icon src="https://cdn.lordicon.com/xyboiuok.json" trigger="hover" style="width:51px;height:48px"></lord-icon> 
+        </a>
+        <a href="/index">
+          <img src="../static/img/logo.png" alt="">
+       </a>
+    </div>
+    <div class="mobile-menu-overlay hidden"></div>
+
+    <!-- Мобильное меню с иконками -->
+    <div class="nav-mobile">
+      <div class="mobile-nav-content">
+        <a class="nav-item" href="/index">Главная</a>
+        <a class="nav-item" href="/faq">FAQ</a>
+        
+        <div class="mobile-icons">
+          <!-- Измененная структура поиска -->
+          <div class="mobile-search-container">
+            <div class="search-icon-mobile" style="padding-left:9px" onclick="toggleMobileSearch()">
+              <lord-icon src="https://cdn.lordicon.com/kkvxgpti.json" trigger="hover" style="width:36px;height:36px;color:#333;"></lord-icon>
+            </div>
+            <div class="search-mobile hidden">
+              <input type="search" placeholder="Type to search" class="search_input">
+            </div>
+          </div>
+          
+          {% if not current_user.is_authenticated %}
+            <a class="nav-icon" href="/user_reg">
+              <lord-icon src="https://cdn.lordicon.com/kthelypq.json" trigger="hover" style="width:36px;height:36px"></lord-icon>
+            </a>
+          {% else %}
+            <a class="nav-icon" href="/private_office">
+              <lord-icon src="https://cdn.lordicon.com/kthelypq.json" trigger="hover" style="width:36px;height:36px"></lord-icon>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="mobile-menu-overlay hidden"></div>
+  </div>
+
+  <section class="hero">
+    <h1>Исследуй мир по вкусу и культуре</h1>
+    <p>Выберите культурный или гастрономический маршрут — и отправляйтесь в путь уже сегодня!</p>
+    <button class="yakor-button"><a class="yakor" href="#choose">Начать путешествиe</a></button>
+  </section>
+
+  <section class="routes">
+    <div class="route-option">
+      <a href="/gastronom" style="text-decoration: none; color:black">
+      <img src="../static/img/gastronom.jpeg" alt="Гастрономический маршрут">
+      <div class="info">
+        <h3>🍽️ Гастрономический</h3>
+        <p>Открой местные вкусы и традиции</p>
+      </div>
+    </a>
+    </div>
+    <div class="route-option" id="choose">
+      <a href="/cultural_routes" style="text-decoration: none; color:black">
+      <img src="../static/img/culture.jpg" alt="Культурный маршрут">
+      <div class="info">
+        <h3>🏛️ Культурный</h3>
+        <p>Погрузись в историю и искусство</p>
+      </div>
+    </a>
+    </div>
+  </section>
+
+  <section class="popular-routes">
+    <div class="popular-routes_scroll">
+    <h2>Популярные маршруты</h2>
+    <div class="popular-scroll" id="popular-scroll-id">
+      <div class="popular-card">
+        <img src="../static/img/route1.jpg" alt="Route 1">
+        <div class="info">
+          <h4>Горы Алматы</h4>
+          <p>Невероятные виды и чистый воздух</p>
+        </div>
+      </div>
+      <div class="popular-card">
+        <img src="../static/img/route2.jpg" alt="Route 2">
+        <div class="info">
+          <h4>Старый город</h4>
+          <p>Исторические улочки и архитектура</p>
+        </div>
+      </div>
+      <div class="popular-card">
+        <img src="../static/img/route3.jpg" alt="Route 3">
+        <div class="info">
+          <h4>Фермерский рынок</h4>
+          <p>Свежие продукты и местная кухня</p>
+        </div>
+      </div> 
+    </div>
+</div>
+  </section>
+
+  <footer>
+    <div class="call_us">
+      Call us<br>
+      <a href="tel:+77477840876" class="call_us_num" target="_blank">+7-(747)-784-08-76</a><br>
+      <a href="mailto:max.enileyev@gmail.com" class="call_us_email" target="_blank">Email</a><br>
+      <a href="https://yandex.kz/maps/ru/org/1107720387/?ll=76.900379%2C43.242069&z=16.19"
+      target="_blank" class='call_us_adr' >Жарокова 24</a>
+    </div>
+    
+    <div class='social_icons'>
+      <a href="https://www.instagram.com/maxigic/?next=%2F" target="_blank">
+      <img src="../static/img/inst_icon.png" 
+      style="width:60px; "></a>
+      <a href="https://t.me/almaways" target="_blank">
+        <img src="../static/img/telegram_icon.png" 
+        style="width:60px; "></a>
+      <a href="https://www.youtube.com/@Almaways" target="_blank">
+        <img src="../static/img/youtube_icon.png" 
+        style="width:60px; "></a>
+      <a href="https://www.tiktok.com/@almaways" target="_blank">
+        <img src="../static/img/tiktok_icons.png" 
+        style="width:60px; "></a>
+    </div>
+  </footer>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+    const scrollContainer = document.getElementById('popular-scroll-id');
+    const isMobile = window.innerWidth < 768;
+
+    if (isMobile && scrollContainer.children.length === 3) {
+      const cards = [...scrollContainer.children];
+      // Дублируем 3 спереди и 3 сзади
+      cards.forEach(card => {
+        scrollContainer.appendChild(card.cloneNode(true));
+      });
+      cards.slice().reverse().forEach(card => {
+        scrollContainer.prepend(card.cloneNode(true));
+      });
+
+      // Центруем на первой "настоящей" карточке
+      requestAnimationFrame(() => {
+        const cardWidth = scrollContainer.children[0].offsetWidth + 20; // включая gap
+        scrollContainer.scrollLeft = cardWidth * 3;
+      });
+
+      // Когда доходим до конца — мягкий цикл
+      scrollContainer.addEventListener('scroll', () => {
+        const cardWidth = scrollContainer.children[0].offsetWidth + 20;
+        const totalCards = scrollContainer.children.length;
+        const maxScroll = cardWidth * (totalCards - 3);
+
+        if (scrollContainer.scrollLeft <= 0) {
+          scrollContainer.scrollLeft = cardWidth * 3;
+        } else if (scrollContainer.scrollLeft >= maxScroll) {
+          scrollContainer.scrollLeft = cardWidth * 3;
+        }
+      });
+    }
+  });
+  </script>  
+</body>
+</html>
+<script>
+  function toggleMenu() {
+const mobileMenu = document.querySelector('.nav-mobile');
+mobileMenu.classList.toggle('active');
+}
+</script>
+<script>
+  function toggleMenu() {
+    const mobileMenu = document.querySelector('.nav-mobile');
+    const burger = document.querySelector('.burger');
+    mobileMenu.classList.toggle('active');
+    burger.classList.toggle('active');
+  }
+</script>
+<script>
+  function toggleMenu() {
+    const mobileMenu = document.querySelector('.nav-mobile');
+    const burger = document.querySelector('.burger');
+    mobileMenu.classList.toggle('active');
+    burger.classList.toggle('active');
+    
+    // Добавляем или удаляем обработчик клика по документу
+    if (mobileMenu.classList.contains('active')) {
+      document.addEventListener('click', closeMenuOnClickOutside);
+    } else {
+      document.removeEventListener('click', closeMenuOnClickOutside);
+    }
+  }
+
+  function closeMenuOnClickOutside(e) {
+    const mobileMenu = document.querySelector('.nav-mobile');
+    const burger = document.querySelector('.burger');
+    
+    // Проверяем, был ли клик вне меню и бургера
+    if (!mobileMenu.contains(e.target) && !e.target.closest('.burger')) {
+      mobileMenu.classList.remove('active');
+      burger.classList.remove('active');
+      document.removeEventListener('click', closeMenuOnClickOutside);
+    }
+  }
+</script>
+<script>
+  // Добавляем функцию для управления поиском
+  function toggleMobileSearch() {
+    const searchMobile = document.querySelector('.nav-mobile .search-mobile');
+    searchMobile.classList.toggle('active');
+    
+    // Фокусируем поле ввода при открытии
+    if (searchMobile.classList.contains('active')) {
+      setTimeout(() => {
+        searchMobile.querySelector('input').focus();
+      }, 100);
+    }
+  }
+  
+  // Закрываем поиск при клике вне области
+  document.addEventListener('click', function(e) {
+    const searchContainer = document.querySelector('.mobile-search-container');
+    if (!searchContainer.contains(e.target)) {
+      document.querySelector('.nav-mobile .search-mobile').classList.remove('active');
+    }
+  });
+</script>
+<script>
+  function toggleMenu() {
+    const mobileMenu = document.querySelector('.nav-mobile');
+    const burger = document.querySelector('.burger');
+    const overlay = document.querySelector('.mobile-menu-overlay');
+    
+    mobileMenu.classList.toggle('active');
+    burger.classList.toggle('active');
+    overlay.classList.toggle('active');
+    
+    if (mobileMenu.classList.contains('active')) {
+      // Блокируем скролл страницы
+      document.body.style.overflow = 'hidden';
+      // Добавляем обработчик для overlay
+      overlay.addEventListener('click', closeMenu);
+    } else {
+      // Разблокируем скролл
+      document.body.style.overflow = '';
+      // Удаляем обработчик
+      overlay.removeEventListener('click', closeMenu);
+    }
+  }
+  
+  function closeMenu() {
+    const mobileMenu = document.querySelector('.nav-mobile');
+    const burger = document.querySelector('.burger');
+    const overlay = document.querySelector('.mobile-menu-overlay');
+    
+    mobileMenu.classList.remove('active');
+    burger.classList.remove('active');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+    overlay.removeEventListener('click', closeMenu);
+  }
+  
+  // Закрытие меню при клике на ссылки внутри него
+  document.querySelectorAll('.nav-mobile a').forEach(link => {
+    link.addEventListener('click', closeMenu);
+  });
+</script>

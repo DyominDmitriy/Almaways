@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Регистрация</title>
+    <style>
+        body {
+            display:flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .form {
+            width: 300px;
+            padding: 32px;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px #ccc;
+            background-color: #fff;
+            font-family: sans-serif;
+            letter-spacing: 1px;
+        }
+        @media (max-width: 768px) {
+             .form {
+             transform: scale(1);}}
+             @media (max-width: 980px) {
+             .form {
+             transform: scale(2);}}
+        .form_input,
+        .form_button{
+          font-family: sans-serif;
+          letter-spacing: 1px;
+          font-size: 16px;
+        }
+        .form_title{
+          text-align: center;
+          margin: 0 0 32px 0;
+          font-weight: normal;
+        }
+        .back{
+          margin-left: 65px;
+          font-size: 18px;
+          text-decoration: none;
+        }
+        .form_group{
+          position: relative;
+          margin-bottom:32px;
+          margin-top:32px;
+        }
+        .form_label{
+          top: 0;
+          z-index: -1;
+          color:#9e9e9e;
+          transition: 0.35s;
+        }
+        .form_input{
+          width: 100%;
+          padding: 0 0 10px 0;
+          border: none;
+          border-bottom: 1px solid #e0e0e0;
+          background-color: transparent;
+          outline: none;
+          transition: 0.3s;
+          padding-top: 10px;
+        }
+        .form_input:focus{
+          border-bottom: 1px solid #1a73a8;
+        }
+        .form_button{
+          padding: 10px 20px;
+          border: none;
+          border-radius: 5px;
+          color: #fff;
+          background-color: #0071f0;
+          outline: none;
+          cursor: pointer;
+          transform: 0.3s;
+        }
+        .form_button:focus,
+        .form_button:hover{
+          background-color: rgba(0,113,240,0.7);
+        }
+        .form_input:focus ~ .form_label,
+        .form_input:not(:placeholder-shown) ~ .form_label{
+          top: -18px;
+          font-size: 12px;
+          color:#e0e0e0;
+        }
+        .back{
+          padding: 10px 20px;
+          border: none;
+          border-radius: 5px;
+          color: #fff;
+          background-color: #0071f0;
+          outline: none;
+          cursor: pointer;
+          transform: 0.3s;
+        }
+        .back:focus,
+        .back:hover{
+          background-color: rgba(0,113,240,0.7);
+        }
+        .back:focus ~ .form_label,
+        .back:not(:placeholder-shown) ~ .form_label{
+          top: -18px;
+          font-size: 12px;
+          color:#e0e0e0;
+        }
+        .form {
+        opacity: 0;
+        animation: ani 1.1s forwards;
+        }
+        @keyframes ani {
+          0% {opacity: 0;}
+          100% {opacity: 1;}
+        }
+        .google-login-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #4285F4;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: 0.3s;
+            width: 260px;
+            margin: 10px auto;
+        }
+        .google-login-btn img {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+        .google-login-btn:hover {
+            background-color: #357ae8;
+        }
+        input[type="password"] {
+            -webkit-text-security: disc !important;
+            text-security: disc !important;
+        }
+        /* Стили для кнопки "глаз" */
+        .toggle-password {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #9e9e9e;
+            padding-bottom:22px;
+        
+        }
+        .toggle-password:hover {
+            color: #1a73a8;
+        }
+       
+    </style>
+</head>
+<body>
+  <form class ="form" method="POST" action="/reg_form">
+    <h1 class="form_title">Registration</h1>
+      <div class="form_group">
+        <input class="form_input" placeholder="" name="emailInput" id="emailInput" required>
+        <label class="form_label">Email</label>
+        {% if error %}
+        <p style="color: red;">{{ error }}</p>
+      </div>
+      {% endif %}
+    <div class="form_group">
+      <input class="form_input" placeholder="" name="phone_num" id="phone_num" required>
+      <label class="form_label">Phone number</label>
+    </div>
+    <div class="form_group">
+      <input class="form_input" type="password" placeholder="" name="passwordInput" id="passwordInput" required>
+      <label class="form_label">Password</label>
+      <button type="button" class="toggle-password" onclick="togglePassword()">👁️</button>
+    </div>
+    <div class="form_group">
+      <input class="form_input" placeholder="" name="nameInput" id="nameInput" required>
+      <label class="form_label">Name</label>
+    </div>
+    <div class="form_group">
+      <input class="form_input" placeholder="" name="surnameInput" id="surnameInput" required>
+      <label class="form_label">Surname</label>
+    </div>
+    <a href="{{ url_for('login_google') }}" class="google-login-btn">
+      <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
+      Войти через Google
+    </a>
+  
+    <button class="form_button">Continue</button>
+    <a class="back" href="/user_login">Login</a>
+  </form>
+
+  <script>
+    function togglePassword() {
+      const passField = document.getElementById("passwordInput");
+      passField.type = (passField.type === "password") ? "text" : "password";
+    }
+  </script>
+</body>
+</html>

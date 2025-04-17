@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title data-i18n="___">
+   Культурные и гастрономические маршруты
+  </title>
+  <script src="/static/js/translate.js" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+  <style>
+   *:focus:not(:focus-visible) {
+    outline: none;
+  }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    body {
+      background-color: #fdfdfc;
+      color: #333;
+    }
+    header {
+      background-color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    .route-page {
+      padding: 40px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .route-page h2 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 30px;
+    }
+    .route-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+    }
+    .route-card {
+      background-color: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+      cursor: pointer;
+    }
+    .route-card:hover {
+      transform: translateY(-8px);
+    }
+    .route-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+    }
+    .route-card .info {
+      padding: 20px;
+    }
+    .route-card .info h3 {
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+    }
+    .route-card .info p {
+      font-size: 0.95rem;
+      color: #555;
+    }
+    @media (max-width: 600px) {
+      .route-page h2 {
+        font-size: 1.5rem;
+      }
+    }
+  a{
+	text-decoration: none;
+}
+.back-arrow {
+    display: inline-block;
+    font-size: 28px;
+    text-decoration: none;
+    color: #333;
+    padding: 10px;
+    transition: all 0.2s ease;
+  }
+  .back-arrow:hover {
+    color: #007BFF;
+    transform: translateX(-4px);
+  }
+  </style>
+ </head>
+ <body>
+  <header>
+   <a data-i18n="!" href="javascript:history.back()" style="font-size: 28px;">
+    ←
+   </a>
+   Культурные и гастрономические маршруты маршруты
+  </header>
+  <section class="route-page">
+    <section class="route-page">
+      <h2 data-i18n="_">Выберите маршрут</h2>
+      <div class="route-list">
+        <div class="route-card">
+          <a href="/cul_1">
+            <img alt="Культурный маршрут 1" src="../static/img/cult1.png"/>
+            <div class="info">
+              <h3 data-i18n="_">Исторический центр</h3>
+              <p data-i18n="___________">
+                Погружение в культурное наследие города с посещением музеев, театров и старинных улиц.
+              </p>
+            </div>
+          </a>
+        </div>
+    
+        <div class="route-card">
+          <a href="/cul_2">
+            <img alt="Гастрономический маршрут 1" src="../static/img/cul4.jpeg"/>
+            <div class="info">
+              <h3 data-i18n="__">Зелёный путь Алматы</h3>
+              <p data-i18n="___________">
+                Маршрут по лучшим кафе, рынкам и местам, где можно попробовать местные деликатесы.
+              </p>
+            </div>
+          </a>
+        </div>
+    
+        <div class="route-card">
+          <a href="/cul_3">
+            <img alt="Культурный маршрут 2" src="../static/img/cult2.png"/>
+            <div class="info">
+              <h3 data-i18n="">Арт-прогулка</h3>
+              <p data-i18n="_______">
+                Посещение галерей, уличного искусства и творческих пространств города.
+              </p>
+            </div>
+          </a>
+        </div>
+    
+        <div class="route-card">
+          <a href="/cul_4">
+            <img alt="Гастрономический маршрут 3" src="../static/img/gast6.jpg"/>
+            <div class="info">
+              <h3 data-i18n="____">Казахская кухня: традиции и аутентика</h3>
+              <p data-i18n="_____">
+                Позволяет глубже понять культуру через еду.
+              </p>
+            </div>
+          </a>
+        </div>
+    
+        <div class="route-card">
+          <a href="/cul_5">
+            <img alt="Культурный маршрут 3" src="../static/img/gast5.jpg"/>
+            <div class="info">
+              <h3 data-i18n="____">Уличная еда и локальные фавориты</h3>
+              <p data-i18n="__">
+                Недорого, атмосферно, разнообразно.
+              </p>
+            </div>
+          </a>
+        </div>
+    
+        <div class="route-card">
+          <a href="/cul_6">
+            <img alt="Культурный маршрут 2" src="../static/img/gast3.jpeg"/>
+            <div class="info">
+              <h3 data-i18n="___fusion___">Современная кухня Алматы: fusion и авторская подача</h3>
+              <p data-i18n="______">
+                Для тех, кто любит эксперименты и эстетику.
+              </p>
+            </div>
+          </a>
+        </div>
+      </div> <!-- Закрыл route-list здесь -->
+    </section>
+    
+  </section>
+ </body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title data-i18n="document">
+   Document
+  </title>
+  <script src="/static/js/translate.js" defer></script>
+  <style>
+   /* Контейнер */
+.favourites-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.empty-message {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #555;
+    margin-bottom: 1.5rem;
+}
+
+/* Сетка карточек */
+.route-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-top: 1.5rem;
+}
+
+/* Карточка маршрута */
+.route-card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.route-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.route-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.route-info {
+    padding: 1.5rem;
+}
+
+.route-info h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.description {
+    color: #666;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.meta {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    color: #777;
+    font-size: 0.9rem;
+}
+
+.actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn {
+    background: #4CAF50;
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    text-decoration: none;
+    flex-grow: 1;
+    text-align: center;
+    transition: background 0.2s;
+}
+
+.btn:hover {
+    background: #3e8e41;
+}
+
+.remove-fav-btn {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.6rem 1.2rem;
+    cursor: pointer;
+    flex-grow: 1;
+    transition: background 0.2s;
+}
+
+.remove-fav-btn:hover {
+    background: #ff5252;
+}
+.back-arrow {
+    display: inline-block;
+    font-size: 28px;
+    text-decoration: none;
+    color: #333;
+    padding: 10px;
+    transition: all 0.2s ease;
+  }
+  .back-arrow:hover {
+    color: #007BFF;
+    transform: translateX(-4px);
+  }
+  </style>
+ </head>
+ <body>
+  {% extends "base.html" %}
+
+    {% block content %}
+  <div class="favourites-container">
+   <a data-i18n="" href="javascript:history.back()" style="font-size: 28px;">
+    ←
+   </a>
+   <h1 data-i18n="___">
+    ❤️ Ваши избранные маршруты
+   </h1>
+   {% if not routes %}
+   <p class="empty-message" data-i18n="________">
+    Вы пока не добавили ни одного маршрута в избранное.
+   </p>
+   <a class="btn" data-i18n="__" href="{{ url_for('cultural_routes') }}">
+    Перейти к маршрутам
+   </a>
+   {% else %}
+   <div class="route-grid">
+    {% for route in routes %}
+    <div class="route-card" data-route-id="{{ route.id }}">
+     <img alt="{{ route.title }}" class="route-image" src="{{ route.image_url or url_for('static', filename='img/default_route.jpg') }}"/>
+     <div class="route-info">
+      <h2>
+       {{ route.title }}
+      </h2>
+      <p class="description">
+       {{ route.description|truncate(150) }}
+      </p>
+      <div class="meta">
+       <span>
+        ⏱ {{ route.duration }}
+       </span>
+       <span>
+        ⚡ {{ route.difficulty }}
+       </span>
+      </div>
+      <div class="actions">
+       <a data-i18n="" href="/{{'cul_' ~ route.id}}">
+        Подробнее
+       </a>
+       <button class="remove-fav-btn" data-i18n="" data-route-id="cul_{{ route.id }}_fav">
+        Удалить
+       </button>
+      </div>
+     </div>
+    </div>
+    {% endfor %}
+   </div>
+   {% endif %}
+  </div>
+  <script>
+   // Удаление из избранного без перезагрузки страницы
+    document.querySelectorAll('.remove-fav-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const routeId = btn.dataset.routeId;
+            const routeCard = btn.closest('.route-card');
+            
+            try {
+                const response = await fetch('/update_route_state_fav', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        route_id: routeId,
+                        new_state_fav: false
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === "success") {
+                    // Плавное исчезновение карточки
+                    routeCard.style.opacity = '0';
+                    setTimeout(() => routeCard.remove(), 300);
+                }
+            } catch (error) {
+                console.error("Ошибка:", error);
+            }
+        });
+    });
+  </script>
+  {% endblock %}
+ </body>
+</html>

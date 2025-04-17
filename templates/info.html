@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Tinos&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gelasio:wght@600&display=swap" rel="stylesheet">
+  <title>Digital.kz</title>
+</head>
+
+
+<body>
+
+  <div class="header-top">
+    <div class="icon">
+      <a class="flag" href="/index"><img src="../static/img/logo.png" alt="" width="73px"></a>
+    </div>
+
+    <div class="nav">
+      <a class="nav-item" href="/index">Главная</a>
+      <a class="nav-item" href="/faq">FAQ</a>
+      
+    </div>
+
+    <script src="https://cdn.lordicon.com/lordicon-1.1.0.js"></script>
+    <div class="icons">
+      <div class="settings">
+        <script src="https://cdn.lordicon.com/lordicon-1.1.0.js"></script>
+        <div class="search">
+          <input type="search" placeholder="Type to search" class="search_input" id="searchInput">
+          <button>
+          
+            <i class="fa fa-search"><lord-icon src="https://cdn.lordicon.com/kkvxgpti.json" trigger="hover" style="width:46px;height:46px;color:#fff;"></lord-icon></i>
+          </button>
+        </div>
+      </div>
+      
+      
+      {% if not current_user.is_authenticated %}
+        <a class="animated-icon3"  href="/user_reg">
+          <lord-icon src="https://cdn.lordicon.com/kthelypq.json" trigger="hover" style="width:48px;height:48px"></lord-icon>
+        </a>
+      {% else %}
+        <a class="animated-icon3"  href="/private_office">
+          <lord-icon src="https://cdn.lordicon.com/kthelypq.json" trigger="hover" style="width:48px;height:48px"></lord-icon>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+
+
+
+
+
+
+
+
+</body>
+</html>

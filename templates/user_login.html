@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="/static/js/translate.js" defer></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 1rem;
+            
+            overflow-x: hidden;
+        }
+        
+        .form-container {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            position: absolute;
+            z-index: 1;
+            transition: all 0.3s ease;
+            border: 1px solid #f1f1f1;
+          
+        }
+        
+        .form-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+        
+        .form-header h1 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+        
+        .form-header p {
+            margin: 0.5rem 0 0;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .form-body {
+            padding: 2rem 1.5rem;
+        }
+        
+        .form-group {
+            position: relative;
+            margin-bottom: 1.25rem;
+        }
+        
+        .form-label {
+            position: absolute;
+            top: 0.75rem;
+            left: 1rem;
+            color: #999;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            pointer-events: none;
+            background: #E8F0FE;
+            padding: 0 0.25rem;
+            z-index: 2;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            background-color: #E8F0FE;
+        }
+        
+        .form-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+            outline: none;
+            background-color: #E8F0FE;
+        }
+        
+        .form-input:focus + .form-label,
+        .form-input:not(:placeholder-shown) + .form-label {
+            top: -0.5rem;
+            left: 0.75rem;
+            font-size: 0.75rem;
+            color: #667eea;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+        
+        .password-toggle:hover {
+            color: #667eea;
+        }
+        
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: #475569;
+            font-size: 0.85rem;
+        }
+        
+        .custom-checkbox {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid #cbd5e1;
+            border-radius: 4px;
+            margin-right: 0.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        
+        .custom-checkbox.checked {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+        
+        .forgot-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.2s ease;
+        }
+        
+        .forgot-link:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .login-btn:active {
+            transform: translateY(0);
+        }
+        
+        .register-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        
+        .register-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        
+        .register-link a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+        
+        .social-login {
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+        
+        .social-text {
+            position: relative;
+            color: #64748b;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+        }
+        
+        .social-text::before,
+        .social-text::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 30%;
+            height: 1px;
+            background-color: #e2e8f0;
+        }
+        
+        .social-text::before {
+            left: 0;
+        }
+        
+        .social-text::after {
+            right: 0;
+        }
+        
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        .social-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            transform: translateY(-3px);
+        }
+        
+        .facebook {
+            background-color: #3b5998;
+        }
+        
+        .google {
+            background-color: #db4437;
+        }
+        
+        .twitter {
+            background-color: #1da1f2;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .form-container {
+            animation: fadeInUp 0.4s ease-out forwards;
+        }
+        
+        /* Floating decoration */
+        .floating {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(102, 126, 234, 0.05);
+            z-index: -1;
+        }
+        
+        .floating-1 {
+            width: 10rem;
+            height: 10rem;
+            top: -3rem;
+            left: -3rem;
+        }
+        
+        .floating-2 {
+            width: 8rem;
+            height: 8rem;
+            bottom: -2rem;
+            right: -2rem;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 480px) {
+            body {
+                padding: 0.5rem;
+                align-items: center;
+                padding-top: 2rem;
+                overflow-y: hidden;
+            }
+            
+            .form-container {
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+                border-radius: 12px;
+            }
+            
+            .form-header {
+                padding: 1.5rem 1rem;
+            }
+            
+            .form-header h1 {
+                font-size: 1.25rem;
+            }
+            
+            .form-header p {
+                font-size: 0.8rem;
+            }
+            
+            .form-body {
+                padding: 1.5rem 1rem;
+            }
+            
+            .form-input {
+                padding: 0.65rem 0.9rem;
+                font-size: 0.9rem;
+            }
+            
+            .form-label {
+                font-size: 0.8rem;
+            }
+            
+            .form-input:focus + .form-label,
+            .form-input:not(:placeholder-shown) + .form-label {
+                font-size: 0.7rem;
+            }
+            
+            .remember-forgot {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            
+            .social-text::before,
+            .social-text::after {
+                width: 25%;
+            }
+            
+            .social-icon {
+                width: 2.25rem;
+                height: 2.25rem;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .form-header {
+                padding: 1.25rem 0.75rem;
+            }
+            
+            .form-body {
+                padding: 1.25rem 0.75rem;
+            }
+            
+            .social-text::before,
+            .social-text::after {
+                width: 20%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating floating-1"></div>
+    <div class="floating floating-2"></div>
+    
+    <div class="form-container">
+        <div class="form-header">
+            <h1>Welcome Back</h1>
+            <p>Login to access your account</p>
+        </div>
+        
+        <div class="form-body">
+            <form method="POST" action="/login">
+                <div class="form-group">
+                    <input type="email" class="form-input" id="emailInput" name="emailInput" placeholder=" " required autocomplete="username">
+                    <label for="emailInput" class="form-label">Email Address</label>
+                </div>
+                <div class="form-group">
+                    <input type="password" class="form-input" id="passwordInput" name="passwordInput" placeholder=" " required autocomplete="current-password">
+                    <label for="passwordInput" class="form-label">Password</label>
+                    <button type="button" class="password-toggle" onclick="togglePassword()">
+                        <i class="far fa-eye"></i>
+                    </button>
+                </div>
+                
+                <div class="remember-forgot">
+                    <label class="checkbox-label" onclick="toggleCheckbox()">
+                        <div class="custom-checkbox" id="rememberCheckbox">
+                            <i class="fas fa-check text-white text-xs" style="display: none;"></i>
+                        </div>
+                        Remember me
+                    </label>
+                    
+                </div>
+                
+                <button type="submit" class="login-btn">Login</button>
+                
+                <div class="register-link">
+                    Don't have an account? <a href="/user_reg">Register here</a>
+                </div>
+                
+                <div class="social-login">
+                    <div class="social-text">Or login with</div>
+                    
+                    <div class="social-icons">
+                       
+                        <a href="{{ url_for('login_google') }}" class="social-icon google">
+                            <i class="fab fa-google"></i>
+                        </a>
+                       
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('passwordInput');
+            const icon = document.querySelector('.password-toggle i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+        
+        function toggleCheckbox() {
+            const checkbox = document.getElementById('rememberCheckbox');
+            const icon = checkbox.querySelector('i');
+            
+            checkbox.classList.toggle('checked');
+            if (checkbox.classList.contains('checked')) {
+                icon.style.display = 'block';
+            } else {
+                icon.style.display = 'none';
+            }
+        }
+        
+        // Add floating animation to decoration elements
+        document.addEventListener('DOMContentLoaded', function() {
+            const floating1 = document.querySelector('.floating-1');
+            const floating2 = document.querySelector('.floating-2');
+            
+            function animateFloating() {
+                floating1.style.transform = `translate(${Math.sin(Date.now() / 2000) * 10}px, ${Math.cos(Date.now() / 2000) * 10}px)`;
+                floating2.style.transform = `translate(${Math.sin(Date.now() / 2500) * 15}px, ${Math.cos(Date.now() / 2500) * 15}px)`;
+                requestAnimationFrame(animateFloating);
+            }
+            
+            animateFloating();
+        });
+    </script>
+</body>
+</html>

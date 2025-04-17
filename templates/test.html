@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RouteMuse</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background-color: #f5f5f0;
+      color: #333;
+    }
+
+    header {
+      background-color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      flex-wrap: wrap;
+      position: relative;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .burger {
+      display: none;
+      flex-direction: column;
+      cursor: pointer;
+      gap: 5px;
+      z-index: 11;
+    }
+
+    .burger div {
+      width: 25px;
+      height: 3px;
+      background-color: #333;
+    }
+
+    nav {
+      display: flex;
+      gap: 15px;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .nav-mobile {
+      display: none;
+      flex-direction: column;
+      background-color: white;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 250px;
+      padding: 60px 20px;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      z-index: 10;
+      transition: transform 0.3s ease;
+      transform: translateX(-100%);
+    }
+
+    .nav-mobile.active {
+      transform: translateX(0);
+    }
+
+    .nav-mobile a {
+      margin-bottom: 20px;
+      font-size: 1.2rem;
+      color: #333;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .hero {
+      background: url('https://images.unsplash.com/photo-1522708323590-d24dbb6b0267') center/cover no-repeat;
+      min-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: white;
+      padding: 0 20px;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 15px;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      margin-bottom: 30px;
+    }
+
+    .hero .yakor-button {
+      padding: 12px 30px;
+      font-size: 1rem;
+      border: none;
+      background-color: #2e8b57;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .yakor {
+      text-decoration: none;
+      color: #f5f5f0;
+    }
+
+    .routes {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 60px 0;
+      gap: 40px;
+      padding: 0 20px;
+    }
+
+    .route-option {
+      background-color: white;
+      border-radius: 12px;
+      overflow: hidden;
+      width: 300px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+      cursor: pointer;
+    }
+
+    .route-option:hover {
+      transform: translateY(-10px);
+    }
+
+    .route-option img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+
+    .route-option .info {
+      padding: 20px;
+    }
+
+    .route-option h3 {
+      margin-bottom: 10px;
+    }
+
+    .popular-routes {
+      margin: 40px 20px;
+      text-align: center;
+    }
+
+    .popular-routes h2 {
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+    }
+
+    .popular-scroll {
+      display: flex;
+      overflow-x: auto;
+      gap: 20px;
+      padding: 10px;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: thin;
+      justify-content: center;
+    }
+
+    .popular-scroll::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .popular-scroll::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 4px;
+    }
+
+    .popular-card {
+      flex: 0 0 auto;
+      width: 220px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      overflow: hidden;
+      scroll-snap-align: start;
+    }
+
+    .popular-card img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+    }
+
+    .popular-card .info {
+      padding: 15px;
+    }
+
+    footer {
+      background-color: #2e8b57;
+      color: white;
+      text-align: center;
+      padding: 40px 20px;
+      margin-top: 60px;
+    }
+
+    @media (max-width: 768px) {
+      .burger {
+        display: flex;
+      }
+
+      nav {
+        display: none;
+      }
+    }
+  </style>
+ <script>
+    let scrollContainer = document.querySelector('.popular-scroll');
+    let scrollSpeed = 1; 
+
+setInterval(() => {
+  scrollContainer.scrollLeft += scrollSpeed;
+  
+  
+  if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
+    scrollContainer.scrollLeft = 0; 
+  }
+}, 10);
+ </script>
+</head>
+<body>
+  <header>
+    <div class="burger" onclick="toggleMenu()">
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+    <div class="logo">RouteMuse</div>
+    <nav>
+      <a href="#choose">Маршруты</a>
+      <a href="#about">О нас</a>
+      <a href="#contact">Контакты</a>
+      <a href="#login">Войти</a>
+    </nav>
+    <div class="nav-mobile">
+      <a href="#choose">Маршруты</a>
+      <a href="#about">О нас</a>
+      <a href="#contact">Контакты</a>
+      <a href="#login">Войти</a>
+    </div>
+  </header>
+
+
+
+  <section class="hero">
+    <h1>Исследуй мир по вкусу и культуре</h1>
+    <p>Выберите культурный или гастрономический маршрут — и отправляйтесь в путь уже сегодня!</p>
+    <button class="yakor-button"><a class="yakor" href="#choose">Начать путешествиe</a></button>
+  </section>
+
+  <section class="routes">
+    <div class="route-option">
+      <img src="../static/img/gastronom.jpeg" alt="Гастрономический маршрут">
+      <div class="info">
+        <h3>🍽️ Гастрономический</h3>
+        <p>Открой местные вкусы и традиции</p>
+      </div>
+    </div>
+    <div class="route-option" id="choose">
+      <img src="../static/img/culture.jpg" alt="Культурный маршрут">
+      <div class="info">
+        <h3>🏛️ Культурный</h3>
+        <p>Погрузись в историю и искусство</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="popular-routes">
+    <div class="popular-routes_scroll">
+    <h2>Популярные маршруты</h2>
+    <div class="popular-scroll">
+      <div class="popular-card">
+        <img src="../static/img/route1.jpg" alt="Route 1">
+        <div class="info">
+          <h4>Горы Алматы</h4>
+          <p>Невероятные виды и чистый воздух</p>
+        </div>
+      </div>
+      <div class="popular-card">
+        <img src="../static/img/route2.jpg" alt="Route 2">
+        <div class="info">
+          <h4>Старый город</h4>
+          <p>Исторические улочки и архитектура</p>
+        </div>
+      </div>
+      <div class="popular-card">
+        <img src="../static/img/route3.jpg" alt="Route 3">
+        <div class="info">
+          <h4>Фермерский рынок</h4>
+          <p>Свежие продукты и местная кухня</p>
+        </div>
+      </div>
+     
+ 
+
+     
+      
+      
+      
+      
+    </div>
+</div>
+  </section>
+
+  <footer>
+    <div class="call_us">
+      Call us<br>
+      <a href="tel:+77477840876" class="call_us_num" target="_blank">+7-(747)-784-08-76</a><br>
+      <a href="mailto:max.enileyev@gmail.com" class="call_us_email" target="_blank">Email</a><br>
+      <a href="https://yandex.kz/maps/ru/org/1107720387/?ll=76.900379%2C43.242069&z=16.19"
+      target="_blank" class='call_us_adr' >Жарокова 24</a>
+    </div>
+    
+    <div class='social_icons'>
+      <a href="https://www.instagram.com/maxigic/?next=%2F" target="_blank">
+      <img src="../static/img/inst_icon.png" 
+      style="width:60px; "></a>
+      <a href="https://t.me/almaways" target="_blank">
+        <img src="../static/img/telegram_icon.png" 
+        style="width:60px; "></a>
+      <a href="https://www.youtube.com/@Almaways" target="_blank">
+        <img src="../static/img/youtube_icon.png" 
+        style="width:60px; "></a>
+      <a href="https://www.tiktok.com/@almaways" target="_blank">
+        <img src="../static/img/tiktok_icons.png" 
+        style="width:60px; "></a>
+    </div>
+  </footer>
+</body>
+</html>
+<script>
+    function toggleMenu() {
+  const mobileMenu = document.querySelector('.nav-mobile');
+  mobileMenu.classList.toggle('active');
+}
+
+  </script>
