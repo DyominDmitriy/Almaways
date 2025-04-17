@@ -376,7 +376,7 @@ def login_google():
     nonce = secrets.token_urlsafe(16)  
     session["nonce"] = nonce  
     return google.authorize_redirect(
-    url_for("http://maket-ov7r.onrender.com/login/callback flowName=GeneralOAuthFlow", _external=True),
+    url_for("auth_callback", _external=True),
     nonce=nonce  
     )
 
