@@ -1,0 +1,644 @@
+.body, .html, .hh-main, .head, .header-top, .footer{
+	overflow-x: hidden;
+}
+.hh-main {
+    width: 1440px;
+    margin-left: auto;
+    margin-right: auto;
+		max-width: 100%; /* Ограничивает ширину */
+    box-sizing: border-box; /* Учитывает padding в ширине */
+
+	}
+.header-top {
+	bottom: 0px;
+	justify-content: center;
+	align-items: center;
+	display:flex;
+	position: fixed;
+	background-color: #fff;
+	width: 100%;
+	top:5px;
+	left: 0;
+	z-index: 500;
+	height: 60px;
+}
+@media (max-width: 768px) {
+	.header-top {
+		height:56px; /* Уменьшаем размер логотипа на мобильных */
+	}
+}
+.icons{
+	margin-left: 320px;
+	padding-top: 4px;
+}	
+.animated-icon1, .animated-icon2, .animated-icon3{
+	text-decoration: none;
+}
+.location-block-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+}
+.animated-icon2 {
+    width: 48px;
+    height: 48px;
+		margin-left: -7px;
+}
+.animated-like-btn {
+    background: none;
+    border: none;
+}
+.icon{
+	padding-top: 3px;
+	position: relative;
+	color: #fff;
+	overflow: hidden;
+	border-radius: 15px;
+}
+.icon:after{
+	border-radius: 15px;
+	content:"";
+	width: 70px;
+	top: 33px;
+	margin-top: 29px;
+	height: 46px;
+	position: absolute;
+	top: 0; left: 0;
+}
+.nav {
+	margin-left: 32px;
+	font-size: 21px;
+	font-weight: 800;
+	font-family: 'Poppins', sans-serif;
+}
+.nav-item:hover{
+	color: orangered;
+}
+.nav-item {
+	position: relative;
+	color: black; /*задаём цвет ссылки*/
+	cursor: pointer;
+	line-height: 1; /*задаём высоту строки*/
+	margin-right: 25px;
+	transition: color 0.3s linear;
+  text-decoration: none; /*убираем подчёркивание*/
+}
+.nav-item:after {
+	display: block;
+	position: absolute;
+	left: 0; /*изменить на right:0;, чтобы изменить направление подчёркивания */
+	width: 0;/*задаём длинну линии до наведения курсора*/
+	height: 2px; /*задаём ширину линии*/
+	background-color: orangered; /*задаём цвет линии*/
+	content: "";
+	transition: width 0.3s ease-out; /*задаём время анимации*/
+}
+.nav-item:hover:after,
+.nav-item:focus:after {
+	width: 100%;
+}
+.ff-gelassio{
+	font-family: 'Poppins', sans-serif;
+	font-weight: 600;
+	color:black;
+	text-decoration: none;
+	align-items: center;
+}
+.inner-title{
+	margin-bottom: 20px;
+	font-size: 33px;
+	line-height: 60px;
+	text-align: center;
+	text-decoration: none;
+}
+.inner-subtitle{
+	text-align: center;
+	opacity: 0.6;
+	font-weight: 400;
+	font-size: 26px;
+}
+.location{
+	padding-top: 48px;
+}
+.container {
+  opacity: 0;
+  animation: ani 1.1s forwards;
+    max-width: 100%; /* Ограничивает ширину */
+    box-sizing: border-box; /* Учитывает padding в ширине */
+}
+
+@keyframes ani {
+  0% {opacity: 0;}
+  100% {opacity: 1;}
+}
+.location-wrapper{
+	margin-top: 45px;
+    justify-content: center;
+    flex-wrap: wrap;
+    display: block;
+    grid-template-columns: 440px 440px 440px;
+    grid-gap: 60px;
+}
+.location-block{
+	background: #FFFFFF;
+	border: 1px solid rgba(0, 0, 0, 0.1);
+	box-sizing: border-box;
+	border-radius: 12px;
+	overflow: hidden;
+	cursor: pointer;
+	transition: 0.5s;
+	-webkit-transition: 0.5s;
+	-moz-transition: 0.5s;
+	-ms-transition: 0.5s;
+	-o-transition: 0.5s;
+	padding: 0;
+	margin: 0;
+}
+.location-block .location-block-title{
+	color: #000;
+}
+.location-block-title{
+	font-size: 24px;
+	line-height: 36px;
+	display: flex;
+	margin-bottom: 2%;
+	margin-top: 2%;	
+}
+.location-block-title a{
+	margin: 0 80px 0 0;
+}
+.location-block a{
+	text-decoration: none;
+}
+.transition{
+	transition: transform .3s;
+	text-decoration: none;
+}
+.transition:hover{
+	transform: scale(1.05);
+	box-shadow: 2px 2px 5px 0px rgba(0, 0, 0, 0.12);
+	border-radius: 12px;
+}
+.settings {
+  margin: 0;
+  padding: 0;
+  display: inline-block;
+	text-align: center;
+	position: absolute;
+	margin-left: -325px;
+	border: none;
+}
+.search {
+  display: flex;
+  background: linear-gradient(45deg, white, white);
+  border-radius: 50px;
+  padding: 0 ;
+	border: none;
+}
+.fa-search{
+	background-color:#fff;
+	border: none;
+	margin-left: 10px;
+}
+.search:hover button {
+  background-color: white;
+	border: none;
+}
+.search button {
+  color: #ffffff;
+  width: 50px;
+  height: 38px;
+  border: none;
+  background-color: #fff;
+  font-size: 0px;
+  cursor: pointer;
+  transition: 0.4s;
+	margin-right: -50px;
+}
+.search_input{
+	width: 250px;
+	border-radius: 20px;
+	background-color: #383434;
+	border: none;
+	color:white;
+	padding-left: 13px;
+}
+.map_wrapper_size{
+	margin-left: 23%;
+	width: 100%;
+	height: 100%;
+	position: relative;
+	display:block;
+	flex-direction: inline;
+}
+.text{
+	display:flex;
+	flex-direction: inline-block;
+}
+	.location__block{
+		background: #FFFFFF;
+		border-radius: 12px;
+		overflow: hidden;
+		font-family: museo-sans, sans-serif;
+		font-style: normal;
+		font-weight: 100;
+		flex-direction: column;
+		box-sizing: border-box;
+		display: flex;
+		width: 35%;
+		height: 40%;
+		border-radius: 5%;
+		box-shadow: 0 4px 20px rgba(0,0,0,.08);
+		margin-top:5%;
+		margin-left:23%;
+		margin-right: 30px;
+	}
+	.location-wrapper{
+		display: flex;
+		flex-direction: inline-block;
+	}
+	footer{
+		width: 100%;
+		float: left;
+		padding-top: 10%;
+		background-color:#383434;
+		border-top: 3px solid silver;
+		margin-top: 5%;
+		font-size: 35px;
+		display: flex;
+		}.call_us{
+		float:left ;
+		color:#fff;
+		vertical-align: 300px;
+	  }
+		.call_us_main{
+		}
+		.call_us_num{
+		color:#fff;
+		text-decoration: none;
+		font-size: 25px;
+		}
+		.call_us_email{
+		color:#fff;
+		text-decoration: none;
+		font-size: 25px;
+		}
+		.call_us_adr{
+		color:#fff;
+		text-decoration: none;
+		font-size: 25px;
+		}
+		.call_us{
+			height: 100%;
+			font-size: 40px;
+		}
+		.about_us{
+			color:white;
+			font-size: 40px;
+		}
+		.about_us_posibiletes{
+			font-size: 25px;
+			color:white;
+			text-decoration: none;
+		}
+		.about_us_tour_operator{
+			font-size: 25px;
+			color:white;
+			text-decoration: none;
+		}
+		.about_us_tour_partners{
+			font-size: 25px;
+			color:white;
+			text-decoration: none;
+		}
+		.about_us{
+			margin-left: 180px;
+		}
+.location-block-img {
+    display: flex;
+    justify-content: center;
+		padding-right: 20px;
+		padding-left: 20px;
+}
+.location-block-img a{
+	padding: -20px;
+}
+.location-img {
+    border-radius: 10px;
+    margin-top: 15px;
+}
+.social_icons{
+	margin-left: 0px;
+	display: flex;
+}
+.place-adding__input-file {
+	position: relative;
+	display: inline-block;
+}
+.place-adding__input-file span {
+	position: relative;
+	display: inline-block;
+	cursor: pointer;
+	outline: none;
+	text-decoration: none;
+	font-size: 14px;
+	vertical-align: middle;
+	color: rgb(255 255 255);
+	text-align: center;
+	border-radius: 4px;
+	background-color: #419152;
+	line-height: 22px;
+	height: 40px;
+	padding: 10px 20px;
+	box-sizing: border-box;
+	border: none;
+	margin: 0;
+	transition: background-color 0.2s;
+}
+#searchResults {
+    margin-top: 20px;
+}
+
+.place-adding__input-file input[type=file] {
+	position: absolute;
+	z-index: -1;
+	opacity: 0;
+	display: block;
+	width: 0;
+	height: 0;
+}
+
+/* Focus */
+.place-adding__input-file input[type=file]:focus + span {
+	box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+/* Hover/active */
+.place-adding__input-file:hover span {
+	background-color: #59be6e;
+}
+.place-adding__input-file:active span {
+	background-color: #2E703A;
+}
+
+/* Disabled */
+.place-adding__input-file input[type=file]:disabled + span {
+	background-color: #eee;
+}
+
+
+.places-adding {
+    margin-bottom: 50px;
+}
+.h_phone {
+	position: relative;
+	display: inline-block;
+	vertical-align: middle;
+	cursor: pointer;
+	width: 40px;
+	height: 40px;
+	border: 1px solid #0E7318;
+	background: #fff;
+	padding: 5px;
+	border-radius: 8px; }
+	.btn__hamb {
+	position: relative;
+	display: block;
+	width: 100%;
+	height: 4px;
+	background: #0E7318;
+	cursor: pointer; }
+	.btn__hamb div {
+		width: 100%;
+		height: 100%; }
+	.btn__hamb:before, .btn__hamb:after {
+		content: "";
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		left: 0;
+		background: #0E7318; }
+	.btn__hamb:before {
+		top: -8px; }
+	.btn__hamb:after {
+		top: 8px; }
+
+	/*Стили мобильного меню*/
+	.mobile-menu {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	z-index: 100; }
+	@media (min-width: 768px) {
+		.mobile-menu {
+		padding-top: 0; } }
+	/*получпрозрачный фон*/
+	.mobile-menu .mm__bg {
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
+		background: rgba(20, 20, 20, 0.8);
+		z-index: 100; }
+	/*Контейнер мобильного меню, именно он выезжает слева*/
+	.mobile-menu .mm__wrapper {
+		visibility: hidden;
+		-webkit-transform: translateX(-100%);
+		transform: translateX(-100%);
+		transition: all .4s ease-in-out;
+		overflow-y: auto;
+		position: relative;
+		width: 100%;
+		height: 100%;
+		z-index: 200;
+		touch-action: auto;
+		-ms-touch-action: auto;
+		background: #fff; }
+		@media (min-width: 768px) {
+		.mobile-menu .mm__wrapper {
+			width: 35%; } }
+		@media (min-width: 1200px) {
+		.mobile-menu .mm__wrapper {
+			width: 25%; } }
+	/*Стили логотипа в меню (опционально)*/
+	.mobile-menu .h__logo {
+		padding-left: 40px;
+		font-size: 2rem;
+		font-weight: 700;
+		color: #333;
+		line-height: 1.25;
+		margin-left: 20px;
+		margin-top: 15px; }
+
+	/*Стили крестика закрытия меню*/
+	.mm__header .close-btn {
+	position: absolute;
+	top: 0;
+	right: 0;
+	margin-right: 15px;
+	margin-top: 15px; }
+
+	.close-btn {
+	position: relative;
+	width: 20px;
+	height: 20px;
+	-webkit-transform: rotate(45deg);
+	-ms-transform: rotate(45deg);
+	transform: rotate(45deg);
+	cursor: pointer; }
+	.close-btn:before {
+		width: 2px;
+		height: 18px;
+		left: 8px;
+		top: 0; }
+	.close-btn:after {
+		height: 2px;
+		width: 18px;
+		top: 8px;
+		left: 0; }
+	.close-btn:before, .close-btn:after {
+		content: "";
+		background: #000;
+		position: absolute; }
+	.close-btn--red:before, .close-btn--red:after {
+	background: #000000; }
+	/* скрываем чекбокс */
+	#menu__toggle {
+	opacity: 0;
+	}
+	/* стилизуем кнопку */
+	.menu__btn {
+	display: flex; /* используем flex для центрирования содержимого */
+	align-items: center;  /* центрируем содержимое кнопки */
+	position: fixed;
+	top: 20px;
+	left: 20px;
+	width: 26px;
+	height: 26px;
+	cursor: pointer;
+	z-index: 1;
+	}
+	/* добавляем "гамбургер" */
+	.menu__btn > span,
+	.menu__btn > span::before,
+	.menu__btn > span::after {
+	display: block;
+	position: absolute;
+	width: 100%;
+	height: 2px;
+	background-color: #616161;
+	}
+	.menu__btn > span::before {
+	content: '';
+	top: -8px;
+	}
+	.menu__btn > span::after {
+	content: '';
+	top: 8px;
+	}
+	/* контейнер меню */
+	.menu__box {
+	display: block;
+	position: fixed;
+	visibility: hidden;
+	top: 0;
+	left: -100%;
+	width: 300px;
+	height: 100%;
+	margin: 0;
+	padding: 80px 0;
+	list-style: none;
+	text-align: center;
+	background-color: #383434;
+	box-shadow: 1px 0px 6px rgba(0, 0, 0, .2);
+	}
+	/* элементы меню */
+	.menu__item {
+	display: block;
+	padding: 12px 24px;
+	color: #fff;
+	font-family: 'Roboto', sans-serif;
+	font-size: 20px;
+	font-weight: 600;
+	text-decoration: none;
+	}
+	.menu__item:hover {
+	background-color: #383434;
+	}
+	#menu__toggle:checked ~ .menu__btn > span {
+	transform: rotate(45deg);
+	}
+	#menu__toggle:checked ~ .menu__btn > span::before {
+	top: 0;
+	transform: rotate(0);
+	}
+	#menu__toggle:checked ~ .menu__btn > span::after {
+	top: 0;
+	transform: rotate(90deg);
+	}
+	#menu__toggle:checked ~ .menu__box {
+	visibility: visible;
+	left: 0;
+	}
+	.menu__btn > span,
+	.menu__btn > span::before,
+	.menu__btn > span::after {
+	transition-duration: .25s;
+	}
+	.menu__box {
+	transition-duration: .25s;
+	}
+	.menu__item {
+	transition-duration: .25s;
+	}
+	#addDivBtn
+	{
+		text-align: center;
+		margin-top: 150px;
+		display: block;
+		padding: 10px;
+		background-color:#1a45c6;
+		width: 200px;
+		border-radius:50px;
+		justify-content: center;
+		float: center;
+	}
+	.editable-div {
+		padding: 10px;
+		margin-top: 10px;
+		background-color: #f4f4f4;
+		border: 1px solid #ccc;
+		width: auto;
+		height: auto;
+		text-align: center;
+	}
+	
+	.editable-div input, .editable-div button {
+		margin-top: 5px;
+	}
+	.editable-div {
+		margin-bottom: 10px;
+		padding: 10px;
+		background-color: #f4f4f4;
+		border: 1px solid #ccc;
+		border-radius: 10px;
+	}
+
+	button {
+		padding: 5px 10px;
+		background-color: #4CAF50;
+		color: white;
+		border: none;
+		border-radius: 5px;
+		cursor: pointer;
+	}
+
+	button:hover {
+		background-color: #45a049;
+	}
+
+	
