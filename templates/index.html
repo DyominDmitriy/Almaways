@@ -1773,7 +1773,11 @@
       </i>
       Главная
      </a>
+     {% if current_user.is_authenticated %}
      <a href="/favourites"><i class="fas fa-route"></i> Мои маршруты</a>
+     {% else %}
+     <a href="/user_reg"><i class="fas fa-route"></i> Мои маршруты</a>
+     {% endif %}
             {% if current_user.is_authenticated %}
             <a href="/logout"><i class="fas fa-sign-out-alt"></i> Выход</a>
             {% else %}
