@@ -160,7 +160,7 @@
     /* Hero section */
     .hero {
       background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
-                  url('https://images.unsplash.com/photo-1527631746610-bca00a040d60?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80') center/cover no-repeat;
+                  url('https://images.unsplash.com/photo-1527631746610-bca00a040d60?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&amp;auto=format&amp;fit=crop&amp;w=2070&amp;q=80') center/cover no-repeat;
       min-height: 90vh;
       display: flex;
       flex-direction: column;
@@ -1502,11 +1502,12 @@
         transition: transform 0.3s ease;
         z-index: 999;
         background: white;
-        overflow-y: auto;
+        overflow-y: hidden;
       }
 
       .sidebar.mobile-active {
         transform: translateX(0);
+        overflow-y: hidden;
       }
 
       .menu-overlay.active {
@@ -1702,6 +1703,15 @@
   
   
 }
+.fade-in {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.4,0,0.2,1), transform 0.8s cubic-bezier(0.4,0,0.2,1);
+}
+.fade-in.visible {
+  opacity: 1;
+  transform: none;
+}
   </style>
   <title data-i18n="digitalkz">
    Digital.kz
@@ -1803,13 +1813,13 @@
    </div>
    <!-- Hero Section -->
    <section class="hero">
-    <h1 class="animate-fade-in-up" data-i18n="_____1">
+    <h1 data-i18n="_____1">
      Откройте для себя скрытые жемчужины Казахстана
     </h1>
-    <p class="animate-fade-in-up delay-1" data-i18n="_______2">
+    <p data-i18n="_______2">
      Исследуйте потрясающие пейзажи, богатую культуру и незабываемые приключения
     </p>
-    <button class="yakor-button animate-fade-in-up delay-2" data-i18n="_">
+    <button class="yakor-button" data-i18n="_">
      <a class="yakor" data-i18n="_" href="#choose">
       Начать путешествие
      </a>
@@ -1817,57 +1827,37 @@
    </section>
    <!-- Route Options -->
    <section class="routes">
-    <div class="route-option animate-fade-in-up delay-2" id="choose">
+    <div class="route-option" id="choose">
      <a href="/cultural_routes" style="text-decoration: none; color:inherit">
       <img alt="Cultural Route" src="https://images.unsplash.com/photo-1527631746610-bca00a040d60?ixlib=rb-4.0.3&amp;ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&amp;auto=format&amp;fit=crop&amp;w=2070&amp;q=80"/>
       <div class="info">
-       <h3 data-i18n="____">
-        🏛️ Культурное и Гастрономическое погружение
-       </h3>
-       <p data-i18n="____">
-        Погрузитесь в многовековое наследие Казахстана
-       </p>
+       <h3 data-i18n="____">🏛️ Культурное и Гастрономическое погружение</h3>
+       <p data-i18n="____">Погрузитесь в многовековое наследие Казахстана</p>
       </div>
      </a>
     </div>
    </section>
    <!-- Popular Routes -->
    <section class="popular-routes">
-    <h2 data-i18n="_">
-     Популярные Маршруты
-    </h2>
+    <h2 data-i18n="_">Популярные Маршруты</h2>
     {% if not popular_routes %}
-    <p class="no-routes" data-i18n="_____">
-     Пока нет данных о популярных маршрутах
-    </p>
+    <p class="no-routes" data-i18n="_____">Пока нет данных о популярных маршрутах</p>
     {% else %}
     <div class="popular-scroll">
      {% for route in popular_routes %}
      <div class="popular-card">
       <img alt="{{ route.title }}" src="{{ route.image_url if route.image_url else url_for('static', filename='img/default_route.jpg') }}"/>
       <div class="info">
-       <h3>
-        {{ route.title }}
-       </h3>
-       <p class="description">
-        {{ route.description|truncate(80) }}
-       </p>
+       <h3>{{ route.title }}</h3>
+       <p class="description">{{ route.description|truncate(80) }}</p>
        <div class="meta">
-        <span>
-         ⏱ {{ route.duration }} ч
-        </span>
-        <span>
-         ⚡ {{ route.difficulty }}
-        </span>
+        <span>⏱ {{ route.duration }} ч</span>
+        <span>⚡ {{ route.difficulty }}</span>
        </div>
-       <div class="popularity">
-        ★ {{ "%.0f"|format(route.popularity * 50) }}%
-       </div>
+       <div class="popularity">★ {{ "%.0f"|format(route.popularity * 50) }}%</div>
       </div>
       <div class="actions">
-       <a data-i18n="!!" href="/{{'cul_' ~ route.id}}">
-        Подробнее
-       </a>
+       <a data-i18n="!!" href="/{{'cul_' ~ route.id}}">Подробнее</a>
       </div>
      </div>
      {% endfor %}
@@ -1876,71 +1866,41 @@
    </section>
    <!-- Testimonials Section -->
    <section class="testimonials" id="testimonials">
-    <h2 class="section-title" data-i18n="_">
-     Истории путешествеников
-    </h2>
+    <h2 class="section-title" data-i18n="_">Истории путешествеников</h2>
     <div class="testimonial-slider">
      <div class="testimonial-slide active">
       <img alt="Sarah Johnson" class="testimonial-avatar" src="https://randomuser.me/api/portraits/women/44.jpg"/>
-      <p class="testimonial-quote" data-i18n="__________________________________________">
-       "Всегда мечтал увидеть Алматы с высоты, но не знал, с чего начать. Нашёл маршрут «Кок-Тобе» на вашем сайте — всё было разложено по шагам: где сесть на автобус, лучшие точки для фото. В итоге встретил рассвет над городом! Теперь советую сервис всем друзьям."
-      </p>
-      <h5 class="testimonial-author" data-i18n="sarah_johnson">
-       Sarah Johnson
-      </h5>
-      <p class="testimonial-role" data-i18n="adventure_traveler_from_canada">
-       Adventure Traveler from Canada
-      </p>
-     </div>
-     <div class="testimonial-slide">
-      <img alt="Michael Chen" class="testimonial-avatar" src="https://randomuser.me/api/portraits/men/32.jpg"/>
-      <p class="testimonial-quote" data-i18n="___________5______gps_____________">
-       "Решила в последний момент съездить в Чарынский каньон. Открыла приложение, за 5 минут сохранила маршрут в «Избранное». GPS-трекер вёл даже без интернета! Обожала эти красные скалы — как на другой планете."
-      </p>
-      <h5 class="testimonial-author" data-i18n="michael_chen">
-       Michael Chen
-      </h5>
-      <p class="testimonial-role" data-i18n="photographer_from_singapore">
-       Photographer from Singapore
-      </p>
-     </div>
-     <div class="testimonial-slide">
-      <img alt="Elena Petrova" class="testimonial-avatar" src="https://randomuser.me/api/portraits/women/68.jpg"/>
-      <p class="testimonial-quote" data-i18n="______________________________">
-       "Искали, куда свозить детей на выходные. Выбрали «Зелёный базар» через ваш сайт — там был чек-лист: что попробовать, где купить сувениры. Дети в восторге от чак-чака, а мы — от атмосферы!"
-      </p>
-      <h5 class="testimonial-author" data-i18n="elena_petrova">
-       Elena Petrova
-      </h5>
-      <p class="testimonial-role" data-i18n="travel_blogger_from_russia">
-       Travel Blogger from Russia
-      </p>
-     </div>
-     <div class="testimonial-nav">
-      <div class="testimonial-dot active" data-slide="0">
-      </div>
-      <div class="testimonial-dot" data-slide="1">
-      </div>
-      <div class="testimonial-dot" data-slide="2">
-      </div>
-     </div>
+      <p class="testimonial-quote" data-i18n="__________________________________________">"Всегда мечтал увидеть Алматы с высоты, но не знал, с чего начать. Нашёл маршрут «Кок-Тобе» на вашем сайте — всё было разложено по шагам: где сесть на автобус, лучшие точки для фото. В итоге встретил рассвет над городом! Теперь советую сервис всем друзьям."</p>
+      <h5 class="testimonial-author" data-i18n="sarah_johnson">Sarah Johnson</h5>
+      <p class="testimonial-role" data-i18n="adventure_traveler_from_canada">Adventure Traveler from Canada</p>
     </div>
-   </section>
-   <!-- Newsletter Section -->
-   <section class="newsletter" id="contact">
-    <h2 class="section-title" data-i18n="__">
-     Оставайтесь с нами
-    </h2>
-    <p class="mb-8 max-w-2xl mx-auto" data-i18n="________________">
-     Подпишитесь на нашу рассылку, чтобы получать информацию о новых маршрутах, специальных предложениях и советах по исследованию Казахстана.
-    </p>
-    <form class="newsletter-form">
-     <input class="newsletter-input" placeholder="Your email address" required="" type="email"/>
-     <button class="newsletter-button" data-i18n="" type="submit">
-      Подписаться
-     </button>
-    </form>
-   </section>
+    <div class="testimonial-slide">
+      <img alt="Michael Chen" class="testimonial-avatar" src="https://randomuser.me/api/portraits/men/32.jpg"/>
+      <p class="testimonial-quote" data-i18n="___________5______gps_____________">"Решила в последний момент съездить в Чарынский каньон. Открыла приложение, за 5 минут сохранила маршрут в «Избранное». GPS-трекер вёл даже без интернета! Обожала эти красные скалы — как на другой планете."</p>
+      <h5 class="testimonial-author" data-i18n="michael_chen">Michael Chen</h5>
+      <p class="testimonial-role" data-i18n="photographer_from_singapore">Photographer from Singapore</p>
+    </div>
+    <div class="testimonial-slide">
+      <img alt="Elena Petrova" class="testimonial-avatar" src="https://randomuser.me/api/portraits/women/68.jpg"/>
+      <p class="testimonial-quote" data-i18n="______________________________">"Искали, куда свозить детей на выходные. Выбрали «Зелёный базар» через ваш сайт — там был чек-лист: что попробовать, где купить сувениры. Дети в восторге от чак-чака, а мы — от атмосферы!"</p>
+      <h5 class="testimonial-author" data-i18n="elena_petrova">Elena Petrova</h5>
+      <p class="testimonial-role" data-i18n="travel_blogger_from_russia">Travel Blogger from Russia</p>
+    </div>
+    <div class="testimonial-nav">
+      <div class="testimonial-dot active" data-slide="0"></div>
+      <div class="testimonial-dot" data-slide="1"></div>
+      <div class="testimonial-dot" data-slide="2"></div>
+    </div>
+  </div>
+</section>
+<section class="newsletter" id="contact">
+  <h2 class="section-title" data-i18n="__">Оставайтесь с нами</h2>
+  <p class="mb-8 max-w-2xl mx-auto" data-i18n="________________">Подпишитесь на нашу рассылку, чтобы получать информацию о новых маршрутах, специальных предложениях и советах по исследованию Казахстана.</p>
+  <form class="newsletter-form">
+    <input class="newsletter-input" placeholder="Your email address" required="" type="email"/>
+    <button class="newsletter-button" data-i18n="" type="submit">Подписаться</button>
+  </form>
+</section>
    <div class="relative bg-gradient-to-r from-green-600 to-emerald-500 text-white pt-16 pb-10 overflow-hidden">
     <!-- Wave shape divider - improved version -->
     <div class="footer-wave">
@@ -1973,15 +1933,15 @@
         <p class="flex items-center justify-center md:justify-start">
          <i class="fas fa-envelope mr-2">
          </i>
-         <a class="hover:text-green-200 transition quick-link" data-i18n="maxenileyevgmailcom" href="mailto:max.enileyev@gmail.com">
-          max.enileyev@gmail.com
+         <a class="hover:text-green-200 transition quick-link" data-i18n="almawaysgmailcom" href="mailto:max.enileyev@gmail.com">
+          almaways@gmail.com
          </a>
         </p>
         <p class="flex items-center justify-center md:justify-start">
          <i class="fas fa-map-marker-alt mr-2">
          </i>
-         <a class="hover:text-green-200 transition quick-link" data-i18n="zharkova_24_almaty" href="https://yandex.kz/maps/ru/org/1107720387/" target="_blank">
-          Zharkova 24, Almaty
+         <a class="hover:text-green-200 transition quick-link" data-i18n="zharokova_24_almaty" href="https://yandex.kz/maps/ru/org/1107720387/" target="_blank">
+          Zharokova 24, Almaty
          </a>
         </p>
        </div>
@@ -2041,8 +2001,8 @@
      </div>
      <!-- Copyright -->
      <div class="border-t border-green-400 mt-10 pt-6 text-center">
-      <p data-i18n="_2023_almaways_all_rights_reserved">
-       © 2023 Almaways. All rights reserved.
+      <p data-i18n="_2025_almaways_all_rights_reserved">
+       © 2025 Almaways. All rights reserved.
       </p>
       <p class="mt-2 text-sm text-green-200">
        Designed with
@@ -2526,5 +2486,20 @@ setInterval(() => {
   });
    </script>
   </div>
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Fade-in Intersection Observer
+  const fadeEls = document.querySelectorAll('.fade-in');
+  const observer = new window.IntersectionObserver((entries, obs) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  fadeEls.forEach(el => observer.observe(el));
+});
+</script>
  </body>
 </html>
