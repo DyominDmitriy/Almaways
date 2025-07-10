@@ -102,3 +102,4 @@ venv/
 ENV/
 env/
 databases/places.db
+/databases
