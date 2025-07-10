@@ -426,7 +426,7 @@ def private_office():
     surname = current_user.surname
     email = current_user.email
     phone_num = current_user.phone_num
-    current_user.avatar = ''
+    avatar = current_user.avatar 
     db_sess = db_session.create_session()
     user = db_sess.merge(current_user)
     total_hours = user.get_total_hours(db_sess)

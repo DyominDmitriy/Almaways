@@ -655,6 +655,7 @@ body {
          src="{{ url_for('static', filename='avatars/' ~ (current_user.avatar or 'default.png')) }}"
          class="avatar"
          alt="avatar">
+        
   </label>
   <input type="file" id="avatar-input" name="avatar" accept="image/*" style="display:none">
 </form>
@@ -663,7 +664,7 @@ body {
      </h2>
      <p>
       {{ current_user.email }}
-     </p>
+     </p>   
      <div class="rating">
       <i class="fas fa-star">
       </i>
@@ -853,21 +854,19 @@ document.getElementById('avatar-input').addEventListener('change', function () {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
-      const ext = data.filename.split('.').pop();
       const newSrc = "{{ url_for('static', filename='avatars/') }}" + data.filename + "?v=" + Date.now();
       document.getElementById('avatar-img').src = newSrc;
     } else {
       alert("Ошибка: " + data.error);
     }
   })
-  .catch(err => { 
+  .catch(err => {
     console.error("Ошибка загрузки:", err);
     alert("Произошла ошибка загрузки");
   });
 });
 </script>
-
-  <script>
+<script>
    document.addEventListener('DOMContentLoaded', function() {
     // Инициализация прогресс-бара
     initProgressBar();
