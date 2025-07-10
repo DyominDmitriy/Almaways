@@ -19,6 +19,10 @@ import logging
 from flask import request, redirect, url_for
 import os
 from werkzeug.utils import secure_filename
+from flask import request, redirect, url_for, flash
+from flask_login import login_required, current_user
+import os
+from werkzeug.utils import secure_filename
 
 
 
@@ -32,28 +36,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-UPLOAD_FOLDER = 'static/avatars'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-@app.route('/upload_avatar', methods=['POST'])
-@login_required
-def upload_avatar():
-    db_sess = db_session.create_session()
-    user = db_sess.query(User).get(current_user.id)
-    file = request.files['avatar']
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-        # Сохраняем имя файла в БД
-        current_user.avatar = filename
-        db_sess.commit()
-    return redirect(url_for('private_office'))
 @app.route('/')
 @app.route('/index')
 def index():
@@ -486,6 +468,44 @@ def login():
         print("Неверный email или пароль.", "error")
         return redirect(url_for('user_login'))
     
+
+
+UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'avatars')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload_avatar', methods=['POST'])
+@login_required
+def upload_avatar():
+    try:
+        if 'avatar' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+
+        file = request.files['avatar']
+        if file.filename == '':
+            return jsonify({'error': 'Empty filename'}), 400
+
+        ext = file.filename.rsplit('.', 1)[-1].lower()
+        filename = secure_filename(f"{current_user.id}.{ext}")
+        filepath = os.path.join(app.root_path, 'static', 'avatars', filename)
+        file.save(filepath)
+
+        # ✅ создаём сессию
+        session = db_session.create_session()
+
+        # Обновляем поле в БД
+        user = session.query(User).get(current_user.id)
+        user.avatar = filename
+        session.commit()
+
+        return jsonify({'success': True, 'filename': filename})
+    
+    except Exception as e:
+        print("🔥 Ошибка при загрузке:", e)
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/posibiletes')
 def posibiletes( ):

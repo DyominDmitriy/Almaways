@@ -1725,32 +1725,15 @@
    <!-- Боковая панель -->
    <aside class="sidebar" id="sidebar">
     <div class="profile-card">
-     <form action="/upload_avatar" enctype="multipart/form-data" id="avatar-form" method="POST">
-      <label for="avatar-input">
-       {% if current_user.is_authenticated %}
-                {% if current_user.avatar %}
-       <a href="/private_office">
-        <img alt="avatar" class="avatar" src="../static/avatars/ ~ current_user.avatar"/>
-       </a>
-       {% else %}
-       <a href="/private_office">
-        <img alt="default avatar" src="{{ url_for('static', filename='avatars/default.png') }}"/>
-       </a>
-       {% endif %}
-            {%else%}
-            {% if current_user.avatar %}
-       <a href="/user_reg">
-        <img alt="avatar" class="avatar" src="../static/avatars/ ~ current_user.avatar"/>
-       </a>
-       {% else %}
-       <a href="user_reg">
-        <img alt="default avatar" src="{{ url_for('static', filename='avatars/default.png') }}"/>
-       </a>
-       {% endif %}
-            {% endif %}
-      </label>
-      <input accept="image/*" id="avatar-input" name="avatar" onchange="document.getElementById('avatar-form').submit();" style="display: none" type="file"/>
-     </form>
+     <form id="avatar-form" enctype="multipart/form-data">
+  <label for="avatar-input">
+    <img id="avatar-img"
+         src="{{ url_for('static', filename='avatars/' ~ (current_user.avatar or 'default.png')) }}"
+         class="avatar"
+         alt="avatar">
+  </label>
+  <input type="file" id="avatar-input" name="avatar" accept="image/*" style="display:none">
+</form>
      <h2>
       {{ current_user.name }} {{ current_user.surname }}
      </h2>
@@ -1973,13 +1956,8 @@
         <p class="flex items-center justify-center md:justify-start">
          <i class="fas fa-envelope mr-2">
          </i>
-<<<<<<< HEAD
          <a class="hover:text-green-200 transition quick-link" data-i18n="demindmitry.vvcom" href="mailto:demindmitry.vv@gmail.com">
           demindmitry.vv@gmail.com
-=======
-         <a class="hover:text-green-200 transition quick-link" data-i18n="maxenileyevgmailcom" href="mailto:max.enileyev@gmail.com">
-          max.enileyev@gmail.com
->>>>>>> parent of 3b422a6 (cleaning files)
          </a>
         </p>
         <p class="flex items-center justify-center md:justify-start">
@@ -2058,6 +2036,32 @@
      </div>
     </div>
    </div>
+   <script>
+document.getElementById('avatar-input').addEventListener('change', function () {
+  const formData = new FormData();
+  formData.append('avatar', this.files[0]);
+
+  fetch('{{ url_for("upload_avatar") }}', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const ext = data.filename.split('.').pop();
+      const newSrc = "{{ url_for('static', filename='avatars/') }}" + data.filename + "?v=" + Date.now();
+      document.getElementById('avatar-img').src = newSrc;
+    } else {
+      alert("Ошибка: " + data.error);
+    }
+  })
+  .catch(err => {
+    console.error("Ошибка загрузки:", err);
+    alert("Произошла ошибка загрузки");
+  });
+});
+</script>
+
    <script>
     document.addEventListener('DOMContentLoaded', () => {
   const scrollContainer = document.getElementById('popular-scroll-id');
