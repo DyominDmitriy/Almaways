@@ -28,6 +28,9 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
 
     progress = sqlalchemy.Column(sqlalchemy.Integer)
 
+    avatar = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+
+
     favourite_routes = sqlalchemy.Column(sqlalchemy.JSON, default=lambda: {
     f"cul_{i}.fav": False for i in range(1, 7)  # 6 маршрутов
 })
@@ -122,6 +125,8 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
         except Exception as e:
             print(f"Error in get_popular_routes: {e}")
             return []
+        
+
 class Route(SqlAlchemyBase):
     __tablename__ = 'routes'
 

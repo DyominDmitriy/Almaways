@@ -629,6 +629,47 @@ body {
     width: 20px;
     text-align: center;
 }
+.lang-switcher {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  background: #e0e0e0;
+  border-radius: 40px;
+  
+  width: 240px;
+  height: 50px;
+  overflow: hidden;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+}
+
+.lang-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 2;
+  color: #444;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.lang-btn.active {
+  color: white;
+  font-weight: 600;
+}
+
+.slider {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: calc(33.33% - 10px);
+  height: calc(100% - 10px);
+  background: #4CAF50;
+  border-radius: 30px;
+  z-index: 1;
+  transition: left 0.3s ease;
+}
   </style>
  </head>
  <body>
@@ -649,26 +690,22 @@ body {
    <!-- Боковая панель -->
    <aside class="sidebar" id="sidebar">
     <div class="profile-card">
-     <form action="/upload_avatar" enctype="multipart/form-data" id="avatar-form" method="POST">
-      <label for="avatar-input">
-       {% if current_user.avatar %}
-       <a href="/private_office">
-        <img alt="avatar" class="avatar" src="../static/avatars/ ~ current_user.avatar"/>
-       </a>
-       {% else %}
-       <a href="/private_office">
-        <img alt="default avatar" src="{{ url_for('static', filename='avatars/default.png') }}"/>
-       </a>
-       {% endif %}
-      </label>
-      <input accept="image/*" id="avatar-input" name="avatar" onchange="document.getElementById('avatar-form').submit();" style="display: none" type="file"/>
-     </form>
+     <form id="avatar-form" enctype="multipart/form-data">
+  <label for="avatar-input">
+    <img id="avatar-img"
+         src="{{ url_for('static', filename='avatars/' ~ (current_user.avatar or 'default.png')) }}"
+         class="avatar"
+         alt="avatar">
+        
+  </label>
+  <input type="file" id="avatar-input" name="avatar" accept="image/*" style="display:none">
+</form>
      <h2>
       {{ current_user.name }} {{ current_user.surname }}
      </h2>
      <p>
       {{ current_user.email }}
-     </p>
+     </p>   
      <div class="rating">
       <i class="fas fa-star">
       </i>
@@ -695,6 +732,12 @@ body {
       </i>
       Выход
      </a>
+     <div class="lang-switcher" id="lang-switcher">
+  <button class="lang-btn active" data-lang="ru">🇷🇺</button>
+  <button class="lang-btn" data-lang="kz">🇰🇿</button>
+  <button class="lang-btn" data-lang="en">🇬🇧</button>
+  <div class="slider"></div>
+</div>
     </nav>
     <div class="promo-banner">
      <h3 data-i18n="_">
@@ -864,6 +907,46 @@ body {
    </main>
   </div>
   <script>
+  const switcher = document.getElementById('lang-switcher');
+  const buttons = switcher.querySelectorAll('.lang-btn');
+  const slider = switcher.querySelector('.slider');
+
+  buttons.forEach((btn, index) => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Двигаем слайдер
+      const left = `calc(${index * 33.333}% + 5px)`;
+      slider.style.left = left;
+    });
+  });
+</script>
+  <script>
+document.getElementById('avatar-input').addEventListener('change', function () {
+  const formData = new FormData();
+  formData.append('avatar', this.files[0]);
+
+  fetch('{{ url_for("upload_avatar") }}', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const newSrc = "{{ url_for('static', filename='avatars/') }}" + data.filename + "?v=" + Date.now();
+      document.getElementById('avatar-img').src = newSrc;
+    } else {
+      alert("Ошибка: " + data.error);
+    }
+  })
+  .catch(err => {
+    console.error("Ошибка загрузки:", err);
+    alert("Произошла ошибка загрузки");
+  });
+});
+</script>
+<script>
    document.addEventListener('DOMContentLoaded', function() {
     // Инициализация прогресс-бара
     initProgressBar();
