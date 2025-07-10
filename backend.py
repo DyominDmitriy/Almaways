@@ -1,22 +1,9 @@
-import re
-import smtplib
-import dns.resolver
 import datetime
-from flask import Flask
-from flask import Flask, render_template, redirect, request, Response, session, send_file, jsonify, Blueprint, abort
+from flask import Flask, render_template, redirect, request, session, jsonify, url_for, flash
 from data import db_session
-from data.user import User
-from data.user import Route
+from data.user import User, Route
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from flask import Flask, redirect, url_for, session
-from authlib.integrations.flask_client import OAuth  
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from data import db_session
-import secrets
-from flask import session
-from flask import jsonify, request
-import logging
-from flask import request, redirect, url_for
+from authlib.integrations.flask_client import OAuth
 import os
 from werkzeug.utils import secure_filename
 from flask import request, redirect, url_for, flash
@@ -24,17 +11,12 @@ from flask_login import login_required, current_user
 import os
 from werkzeug.utils import secure_filename
 
-
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "mishadimamax200620072008"
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(days=365)
 login_manager = LoginManager()
 login_manager.init_app(app)
 oauth = OAuth(app)
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 
 @app.route('/')
 @app.route('/index')
@@ -43,16 +25,6 @@ def index():
     popular_routes = User.get_popular_routes(db_sess, limit=5)
     db_sess.close()
     return render_template("index.html", current_user=current_user, popular_routes=popular_routes)
-@app.route('/debug_user')
-@login_required
-def debug_user():
-    db_sess = db_session.create_session()
-    user = db_sess.query(User).get(current_user.id)
-    return jsonify({
-        "id": user.id,
-        "completed_routes": user.completed_routes,
-        "progress": user.progress
-    })
 
 @app.route('/get_current_user_state')
 @login_required
@@ -66,8 +38,6 @@ def get_current_user_state():
         })
     finally:
         db_sess.close()
-MAX_ROUTES = 6  # Константа в начале файла
-
 
 @app.route('/get_user_progress')
 @login_required
@@ -77,50 +47,29 @@ def get_user_progress():
         "max_routes": 6
     })
 
-
 @app.route('/update_route_state', methods=['POST'])
 @login_required
 def update_route_state():
     data = request.get_json()
     route_id = data.get("route_id")
     new_state = data.get("new_state")
-    
     if not route_id or new_state is None:
         return jsonify({"status": "error", "message": "Missing parameters"}), 400
-    
     db_sess = db_session.create_session()
     try:
-        # Важно: использовать merge для прикрепления объекта к сессии
         user = db_sess.merge(current_user)
-        
-        # Инициализация если None
         if user.completed_routes is None:
-            user.completed_routes = {
-                "cul_1": False,
-                "cul_2": False,
-                "cul_3": False,
-                "cul_4": False,
-                "cul_5": False,
-                "cul_6": False
-            }
-        
-        # Обновляем состояние
+            user.completed_routes = {f"cul_{i}": False for i in range(1, 7)}
         user.completed_routes[route_id] = new_state
         user.progress = sum(1 for v in user.completed_routes.values() if v)
-        
-        # Явное сохранение
         db_sess.commit()
-        
-        # Принудительное обновление из БД
         db_sess.refresh(user)
-        
         return jsonify({
             "status": "success",
             "new_state": new_state,
             "progress": user.progress,
-            "all_routes": user.completed_routes  # Для отладки
+            "all_routes": user.completed_routes
         })
-        
     except Exception as e:
         db_sess.rollback()
         print(f"Database error: {str(e)}")
@@ -128,48 +77,27 @@ def update_route_state():
     finally:
         db_sess.close()
 
-
 @app.route('/favourites')
 @login_required
 def favourites():
     db_sess = db_session.create_session()
-    
-    # Получаем избранные маршруты пользователя
-    user = db_sess.merge(current_user)  # merge для работы с сессией
-    favourite_routes = user.favourite_routes or {}  # Если None, то пустой словарь
-    
-    # Получаем ID маршрутов, которые в избранном (ключи вида "cul_1_fav" -> преобразуем в число)
+    user = db_sess.merge(current_user)
+    favourite_routes = user.favourite_routes or {}
     favourite_route_ids = [
-        int(route_id.replace('_fav', '').replace('cul_', '')) 
-        for route_id, is_fav in favourite_routes.items() 
+        int(route_id.replace('_fav', '').replace('cul_', ''))
+        for route_id, is_fav in favourite_routes.items()
         if is_fav
     ]
-    
-    # Загружаем маршруты из базы
     routes = db_sess.query(Route).filter(Route.id.in_(favourite_route_ids)).all()
-    
     db_sess.close()
-    
     return render_template('favourites.html', routes=routes)
 
-@app.route('/route/<string:route_id>')  # Принимает 'cul_1' или '1'
+@app.route('/route/<string:route_id>')
 def route_page(route_id):
     db_sess = db_session.create_session()
-    # Удаляем 'cul_' для поиска в БД
     route_num = int(route_id.replace('cul_', ''))
     route = db_sess.query(Route).filter(Route.id == route_num).first()
     return render_template('route.html', route=route)
-
-
-@app.route('/debug_user_fav')
-@login_required
-def debug_user_fav():
-    db_sess = db_session.create_session()
-    user = db_sess.query(User).get(current_user.id)
-    return jsonify({
-        "id": user.id,
-        "favourite_routes": user.favourite_routes
-    })
 
 @app.route('/get_current_user_state_fav')
 @login_required
@@ -182,7 +110,6 @@ def get_current_user_state_fav():
         })
     finally:
         db_sess.close()
-MAX_ROUTES = 6  # Константа в начале файла
 
 @app.route('/update_route_state_fav', methods=['POST'])
 @login_required
@@ -190,36 +117,20 @@ def update_route_state_fav():
     data = request.get_json()
     route_id = data.get("route_id")
     new_state_fav = data.get("new_state_fav")
-    
     if not route_id or new_state_fav is None:
         return jsonify({"status": "error", "message": "Missing parameters"}), 400
-    
     db_sess = db_session.create_session()
     try:
         user = db_sess.merge(current_user)
-        
-        # Инициализация если None
         if user.favourite_routes is None:
-            user.favourite_routes = {
-                "cul_1_fav": False,
-                "cul_2_fav": False,
-                "cul_3_fav": False,
-                "cul_4_fav": False,
-                "cul_5_fav": False,
-                "cul_6_fav": False
-            }
-        
-        # Обновляем состояние
+            user.favourite_routes = {f"cul_{i}_fav": False for i in range(1, 7)}
         user.favourite_routes[route_id] = new_state_fav
-        
         db_sess.commit()
         db_sess.refresh(user)
-        
         return jsonify({
             "status": "success",
             "new_state_fav": new_state_fav,
         })
-        
     except Exception as e:
         db_sess.rollback()
         print(f"Database error: {str(e)}")
@@ -227,19 +138,15 @@ def update_route_state_fav():
     finally:
         db_sess.close()
 
-
-
 @app.route('/api/routes')
 def get_routes():
     route_ids = request.args.get('ids', '').split(',')
-    route_ids = [rid for rid in route_ids if rid]  # Фильтруем пустые значения
+    route_ids = [rid for rid in route_ids if rid]
     db_sess = db_session.create_session()
     user = db_sess.query(User).get(current_user.id)
-    # Здесь должна быть логика получения маршрутов из БД
     routes = []
-    
     for rid in route_ids:
-        route = get_route_by_id(rid)  # Ваша функция получения маршрута
+        route = get_route_by_id(rid)
         if route:
             routes.append({
                 "id": route.id,
@@ -250,7 +157,6 @@ def get_routes():
                 "location": route.location,
                 "type": route.type
             })
-    
     return jsonify(routes)
 
 @app.route('/info')
@@ -261,15 +167,9 @@ def info():
 def cultural_routes():
     return render_template("cultural_routes.html")
 
-
-
 @app.route('/cul_1')
 def cul_1():
     return render_template("cul_1.html")
-    
-
-
-
 
 @app.route('/cul_2')
 def cul_2():
@@ -331,11 +231,11 @@ def user_login():
 def user_reg():
     return render_template("user_reg.html")
 
-
 def is_valid_email(email):
+    import re
     regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
     return re.match(regex, email) is not None
-    
+
 google = oauth.register(
     name='google',
     client_id="376838788269-k120re8lp9bjv3dv31i6s9d0ekpkh5tq.apps.googleusercontent.com",
@@ -346,41 +246,33 @@ google = oauth.register(
     client_kwargs={'scope': 'openid email profile', 'nonce': 'random_nonce_value'}
 )
 
-login_manager = LoginManager()
-login_manager.init_app(app)
-
 def load_user(user_id):
     db_sess = db_session.create_session()
     return db_sess.query(User).get(user_id)
 
 @app.route("/login/google")
 def login_google():
-    nonce = secrets.token_urlsafe(16)  
-    session["nonce"] = nonce  
+    nonce = secrets.token_urlsafe(16)
+    session["nonce"] = nonce
     return google.authorize_redirect(
-    url_for("auth_callback", _external=True),
-    nonce=nonce  
+        url_for("auth_callback", _external=True),
+        nonce=nonce
     )
-
 
 @app.route("/login/callback")
 def auth_callback():
     token = google.authorize_access_token()
     if not token:
         return "Ошибка авторизации", 400
-
     try:
-        nonce = session.pop("nonce", None)  
+        nonce = session.pop("nonce", None)
         if not nonce:
             return "Ошибка: nonce отсутствует", 400
-
-        user_info = google.parse_id_token(token, nonce=nonce)  
+        user_info = google.parse_id_token(token, nonce=nonce)
     except Exception as e:
         return f"Ошибка обработки токена: {str(e)}", 400
-
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.email == user_info["email"]).first()
-
     if not user:
         user = User(
             name=user_info.get("name", "Без имени"),
@@ -388,7 +280,6 @@ def auth_callback():
         )
         db_sess.add(user)
         db_sess.commit()
-
     login_user(user, remember=True)
     return redirect("/private_office")
 
@@ -406,8 +297,10 @@ def reg_form():
         return render_template("user_reg.html", error="Неверный формат email")
     existing_user = db_sess.query(User).filter(User.email == email).first()
     if existing_user:
+        from flask import flash
+        flash('Почта уже зарегистрирована', 'error')
         db_sess.close()
-        return render_template("user_reg.html", error="Этот email уже зарегистрирован")
+        return redirect('/user_reg')
     user.name = name
     user.surname = surname
     user.email = email
@@ -417,8 +310,9 @@ def reg_form():
     db_sess.add(user)
     db_sess.commit()
     db_sess.close()
+    from flask import flash
+    flash('Вы успешно зарегистрировались!', 'success')
     return redirect('/user_login')
-
 
 @app.route('/private_office')
 def private_office():
@@ -433,41 +327,28 @@ def private_office():
     db_sess.close()
     db_sess = db_session.create_session()
     user = db_sess.merge(current_user)
-    total_photos = user.get_total_photos()  # Новый метод
+    total_photos = user.get_total_photos()
     db_sess.close()
-    
-    
-    
-    return render_template("private_office.html", total_hours=total_hours, 
-                    total_photos=total_photos)
-
-@app.before_request
-def make_session_permanent():
-    session.permanent = False
-
-
+    return render_template("private_office.html", total_hours=total_hours, total_photos=total_photos)
 
 @app.route('/login', methods=["POST", "GET"])
 def login():
     form = request.form
     if request.method=="POST":
-        if form.get('rememberMe'):
-            remember_me =form.get("rememberMe") == 'on'  
+        remember_me = bool(form.get("rememberMe"))
+        email = form.get('emailInput')
+        password = form.get("passwordInput")
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.email == email).first()
+        if user and user.check_password(password):
+            login_user(user, remember=remember_me)
+            flash('Вы успешно вошли в аккаунт', 'success')
+            return redirect("/private_office")
         else:
-            remember_me = 'False'
-        print(remember_me)
-    email = form.get('emailInput')
-    password = form.get("passwordInput")
-    db_sess = db_session.create_session()
-    user = db_sess.query(User).filter(User.email == email).first()
-    if user and user.check_password(password):
-        login_user(user, remember=remember_me)
-        return redirect("/private_office")
-    else:
-        db_sess.close()
-        print("Неверный email или пароль.", "error")
-        return redirect(url_for('user_login'))
-    
+            db_sess.close()
+            flash('Вы ввели неверный email или пароль', 'error')
+            return redirect("/user_login")
+    return render_template("user_login.html")
 
 
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'avatars')
@@ -521,12 +402,13 @@ def guide( ):
 
 @app.route('/favourite_routes')
 def favourite_routes( ):
-    return render_template("favourite_routes.html") 
+    return render_template("favourite_routes.html")
 
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
     return db_sess.query(User).get(user_id)
+
 @app.route('/partners')
 def partners( ):
     return render_template("partners.html")
@@ -537,21 +419,9 @@ def logout():
     logout_user()
     return redirect("/")
 
-#
-# @app.route('/info')
-# def info():
-#     return render_template("info.html")
-#
-#
-# @app.route('/info')
-# def info():
-#     return render_template("info.html")
-
-
 def main():
     db_session.global_init("databases/places.db")
     app.run(debug=True, host='0.0.0.0', port=7010,)
-
 
 if __name__ == "__main__":
     main()
