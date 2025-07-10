@@ -22,6 +22,7 @@
             padding: 20px;
            
             overflow-x:hidden;
+            overflow-y:hidden;
         }
         
         .form-container {
@@ -281,6 +282,20 @@
 <body>
     <div class="floating floating-1"></div>
     <div class="floating floating-2"></div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:9999;min-width:260px;max-width:90vw;">
+          {% for category, message in messages %}
+            <div style="background:{{ 'linear-gradient(90deg,#22c55e,#4ade80)' if category=='success' else 'linear-gradient(90deg,#ef4444,#b91c1c)' }};
+                        color:white;padding:16px 24px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.12);
+                        margin-bottom:8px;font-size:1rem;text-align:center;">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
     
     <div class="form-container">
         <div class="form-header">
