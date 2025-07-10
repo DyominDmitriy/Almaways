@@ -103,3 +103,4 @@ ENV/
 env/
 databases/places.db
 /databases
+databases/places.db
