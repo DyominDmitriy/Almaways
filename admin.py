@@ -27,7 +27,7 @@ def routes_list():
     session = db_session.create_session()
     routes = session.query(Route).order_by(Route.id).all()
     session.close()
-    return render_template('admin_routes.html', routes=routes)
+    return render_template('cul/admin_routes.html', routes=routes)
 
 # --- Добавление ---
 @admin_bp.route('/routes/add', methods=['GET', 'POST'])
@@ -62,7 +62,7 @@ def add_route():
         flash('Маршрут создан.', 'success')
         return redirect(url_for('admin.routes_list'))
 
-    return render_template('admin_edit_route.html', route=None)
+    return render_template('cul/admin_edit_route.html', route=None)
 
 # --- Редактирование ---
 @admin_bp.route('/routes/edit/<int:id>', methods=['GET', 'POST'])
@@ -96,7 +96,7 @@ def edit_route(id):
         return redirect(url_for('admin.routes_list'))
 
     session.close()
-    return render_template('admin_edit_route.html', route=route)
+    return render_template('cul/admin_edit_route.html', route=route)
 
 # --- Удаление ---
 @admin_bp.route('/routes/delete/<int:id>')
