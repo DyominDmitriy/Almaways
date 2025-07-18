@@ -160,7 +160,7 @@
     /* Hero section */
     .hero {
       background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
-                  url('https://images.unsplash.com/photo-1527631746610-bca00a040d60?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80') center/cover no-repeat;
+                  url('https://images.unsplash.com/photo-1527631746610-bca00a040d60?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&amp;auto=format&amp;fit=crop&amp;w=2070&amp;q=80') center/cover no-repeat;
       min-height: 90vh;
       display: flex;
       flex-direction: column;
@@ -1805,7 +1805,7 @@
      <a href="/user_reg"><i class="fas fa-route"></i> Мои маршруты</a>
      {% endif %}
             {% if current_user.is_authenticated %}
-            <a href="/private_office"><i class="fas fa-sign-out-alt"></i>Личный кабинет</a>
+            <a href="/user_office"><i class="fas fa-sign-out-alt"></i>Личный кабинет</a>
             <a href="/logout"><i class="fas fa-sign-out-alt"></i> Выход</a>
             {% else %}
             <a href="/user_reg"><i class="fas fa-sign-out-alt"></i>Войти</a>

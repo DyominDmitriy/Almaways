@@ -225,11 +225,11 @@ def geog_obj():
 
 @app.route('/user_login')
 def user_login():
-    return render_template("user_login.html")
+    return render_template("user/user_login.html")
 
 @app.route('/user_reg')
 def user_reg():
-    return render_template("user_reg.html")
+    return render_template("user/user_reg.html")
 
 def is_valid_email(email):
     import re
@@ -281,7 +281,7 @@ def auth_callback():
         db_sess.add(user)
         db_sess.commit()
     login_user(user, remember=True)
-    return redirect("/private_office")
+    return redirect("/user_office")
 
 @app.route('/reg_form', methods=["POST"])
 def reg_form():
@@ -294,7 +294,7 @@ def reg_form():
     db_sess = db_session.create_session()
     user = User()
     if not is_valid_email(email):
-        return render_template("user_reg.html", error="Неверный формат email")
+        return render_template("user/user_reg.html", error="Неверный формат email")
     existing_user = db_sess.query(User).filter(User.email == email).first()
     if existing_user:
         from flask import flash
@@ -314,8 +314,8 @@ def reg_form():
     flash('Вы успешно зарегистрировались!', 'success')
     return redirect('/user_login')
 
-@app.route('/private_office')
-def private_office():
+@app.route('/user_office')
+def user_office():
     name = current_user.name
     surname = current_user.surname
     email = current_user.email
@@ -329,7 +329,7 @@ def private_office():
     user = db_sess.merge(current_user)
     total_photos = user.get_total_photos()
     db_sess.close()
-    return render_template("private_office.html", total_hours=total_hours, total_photos=total_photos)
+    return render_template("user/user_office.html", total_hours=total_hours, total_photos=total_photos)
 
 @app.route('/login', methods=["POST", "GET"])
 def login():
@@ -343,12 +343,12 @@ def login():
         if user and user.check_password(password):
             login_user(user, remember=remember_me)
             flash('Вы успешно вошли в аккаунт', 'success')
-            return redirect("/private_office")
+            return redirect("/user_office")
         else:
             db_sess.close()
             flash('Вы ввели неверный email или пароль', 'error')
             return redirect("/user_login")
-    return render_template("user_login.html")
+    return render_template("user/user_login.html")
 
 
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'avatars')
