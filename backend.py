@@ -301,8 +301,8 @@ def reg_form():
         flash('Почта уже зарегистрирована', 'error')
         db_sess.close()
         return redirect('/user_reg')
-    user.name = name
-    user.surname = surname
+    user.name = name 
+    user.surname = surname 
     user.email = email
     user.phone_num = phone_num
     user.set_password(password)
