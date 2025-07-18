@@ -7,8 +7,24 @@
    Зелёный путь Алматы
   </title>
   <script src="/static/js/translate.js" defer></script>
-  <link rel="stylesheet" href="/static/css/cul_common.css"/>
   <style>
+   *:focus:not(:focus-visible) {
+    outline: none;
+  }
+    html {
+      scroll-behavior: smooth;
+    }
+    .body, html,map{
+      overflow-x:hidden;
+      
+    }
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f7f4ef;
+      color: #2f3e2f;
+      margin: 0;
+      padding: 0;
+    }
     header {
       background-image: url('../static/img/culture.jpg');
       background-size: cover;
@@ -21,6 +37,167 @@
       text-decoration: none;
       color:white;
     }
+    .header-button {
+      position: absolute;
+      bottom: 20px;
+      background-color: #f0cd9c;
+      color: #2f3e2f;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .container {
+      padding: 2rem;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 1rem;
+    }
+    .icons {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .icons div {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+    }
+    .route-point {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .route-point img {
+      width: 120px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .route-info h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .route-info p {
+      margin: 4px 0;
+      font-size: 14px;
+    }
+    .map {
+  width: 100%;
+  max-width: 900px;
+  height: 600px;
+  margin: 2rem auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.a_but
+{
+  text-decoration: none;
+  color:black;
+}
+.back-arrow {
+    display: inline-block;
+    font-size: 28px;
+    text-decoration: none;
+    color: #333;
+    padding: 10px;
+    transition: all 0.2s ease;
+  }
+  .back-arrow:hover {
+    color: #007BFF;
+    transform: translateX(-4px);
+  }
+  .route-done-btn {
+    background-color: #28a745;
+    color: white;
+    font-size: 18px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    user-select: none;
+  }
+
+  .route-done-btn:hover {
+    background-color: #218838;
+    transform: scale(1.05);
+  }
+
+  .route-done-btn:active {
+    transform: scale(0.98);
+  }
+
+  .route-done-btn.done {
+    background-color: #6c757d;
+    cursor: pointer;
+    transform: none;
+  }
+  .route-done-btn {
+    background-color: #4CAF50; /* Зеленый */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.route-done-btn.done {
+    background-color: #9E9E9E; /* Серый */
+    cursor: default;
+}
+
+
+
+  .route-fav-btn {
+    background-color: #ba0d0d;
+    color: white;
+    font-size: 18px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    user-select: none;
+  }
+
+  .route-fav-btn:hover {
+    background-color: #d33017;
+    transform: scale(1.05);
+  }
+
+  .route-fav-btn:active {
+    transform: scale(0.98);
+  }
+
+  .route-fav-btn.done {
+    background-color: #6c757d;
+    cursor: pointer;
+    transform: none;
+  }
+  .route-fav-btn {
+    background-color: #ec1e17; /* Зеленый */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.route-fav-btn.done {
+    background-color: #9E9E9E; /* Серый */
+    cursor: default;
+}
   </style>
  </head>
  <body>
