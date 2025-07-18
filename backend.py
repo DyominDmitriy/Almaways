@@ -334,7 +334,7 @@ def user_office():
 @app.route('/login', methods=["POST", "GET"])
 def login():
     form = request.form
-    if request.method=="POST":
+    if request.method == "POST":
         remember_me = bool(form.get("rememberMe"))
         email = form.get('emailInput')
         password = form.get("passwordInput")
@@ -374,8 +374,19 @@ def upload_avatar():
         filepath = os.path.join(app.root_path, 'static', 'avatars', filename)
         file.save(filepath)
 
-        # ✅ создаём сессию
+        # Удаляем старый аватар, если он есть и не дефолтный
         session = db_session.create_session()
+        user = session.query(User).get(current_user.id)
+        old_avatar = user.avatar
+        if old_avatar and old_avatar != 'default.png':
+            old_avatar_path = os.path.join(app.root_path, 'static', 'avatars', old_avatar)
+            if os.path.exists(old_avatar_path) and old_avatar_path != filepath:
+                try:
+                    os.remove(old_avatar_path)
+                except Exception as e:
+                    print(f"Не удалось удалить старый аватар: {e}")
+
+        file.save(filepath)
 
         # Обновляем поле в БД
         user = session.query(User).get(current_user.id)
