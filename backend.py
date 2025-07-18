@@ -165,31 +165,31 @@ def info():
 
 @app.route('/cultural_routes')
 def cultural_routes():
-    return render_template("cultural_routes.html")
+    return render_template("cul/cultural_routes.html")
 
 @app.route('/cul_1')
 def cul_1():
-    return render_template("cul_1.html")
+    return render_template("cul/cul_1.html")
 
 @app.route('/cul_2')
 def cul_2():
-    return render_template("cul_2.html")
+    return render_template("cul/cul_2.html")
 
 @app.route('/cul_3')
 def cul_3():
-    return render_template("cul_3.html")
+    return render_template("cul/cul_3.html")
 
 @app.route('/cul_4')
 def cul_4():
-    return render_template("cul_4.html")
+    return render_template("cul/cul_4.html")
 
 @app.route('/cul_5')
 def cul_5():
-    return render_template("cul_5.html")
+    return render_template("cul/cul_5.html")
 
 @app.route('/cul_6')
 def cul_6():
-    return render_template("cul_6.html")
+    return render_template("cul/cul_6.html")
 
 @app.route('/gastronom')
 def gastronom():
