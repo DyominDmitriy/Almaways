@@ -44,7 +44,7 @@ def cul_dynamic(route_id):
     if not route:
         # если нет в БД — 404 или верни старую статичную страницу при совпадении
         # (пример: cul_1.html ещё существует)
-        template_name = f"cul_{route_id}.html"
+        template_name = f"cul/cul_{route_id}.html"
         try:
             return render_template(template_name)  # fallback
         except:
@@ -55,27 +55,27 @@ def cul_dynamic(route_id):
 # --- Совместимость со старыми урлами ---
 @app.route('/cul_1')
 def cul_1():
-    return redirect(url_for('cul_dynamic', route_id=1))
+    return redirect(url_for('cul/cul_dynamic', route_id=1))
 
 @app.route('/cul_2')
 def cul_2():
-    return redirect(url_for('cul_dynamic', route_id=2))
+    return redirect(url_for('cul/cul_dynamic', route_id=2))
 
 @app.route('/cul_3')
 def cul_3():
-    return redirect(url_for('cul_dynamic', route_id=3))
+    return redirect(url_for('cul/cul_dynamic', route_id=3))
 
 @app.route('/cul_4')
 def cul_4():
-    return redirect(url_for('cul_dynamic', route_id=4))
+    return redirect(url_for('cul/cul_dynamic', route_id=4))
 
 @app.route('/cul_5')
 def cul_5():
-    return redirect(url_for('cul_dynamic', route_id=5))
+    return redirect(url_for('cul/cul_dynamic', route_id=5))
 
 @app.route('/cul_6')
 def cul_6():
-    return redirect(url_for('cul_dynamic', route_id=6))
+    return redirect(url_for('cul/cul_dynamic', route_id=6))
 
 
 
