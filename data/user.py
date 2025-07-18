@@ -39,7 +39,6 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     f"cul_{i}": False for i in range(1, 7)  # 6 маршрутов
 })
     
-    avatar = sqlalchemy.Column(sqlalchemy.String)
     def set_password(self, password):
         self.password = generate_password_hash(password)
 
