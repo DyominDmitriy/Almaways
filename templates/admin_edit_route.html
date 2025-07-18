@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ 'Редактировать' if route else 'Добавить' }} маршрут</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+  <h1>{{ 'Редактировать' if route else 'Добавить' }} маршрут</h1>
+  <p><a href="{{ url_for('admin.routes_list') }}">← Вернуться к списку</a></p>
+
+  <form method="POST" enctype="multipart/form-data">
+    <label>Название:</label>
+    <input type="text" name="title" value="{{ route.title if route else '' }}" required>
+
+    <label>Краткое описание:</label>
+    <input type="text" name="short_description" value="{{ route.short_description if route else '' }}">
+
+    <label>Полное описание:</label>
+    <textarea name="description" rows="5">{{ route.description if route else '' }}</textarea>
+
+    <label>Длительность (часы, число):</label>
+    <input type="number" step="0.5" name="duration" value="{{ route.duration if route else '' }}">
+
+    <label>Сложность:</label>
+    <select name="difficulty">
+      {% set diff = route.difficulty if route else '' %}
+      <option value="Легкая"  {{ 'selected' if diff=='Легкая'  else '' }}>Легкая</option>
+      <option value="Средняя" {{ 'selected' if diff=='Средняя' else '' }}>Средняя</option>
+      <option value="Сложная" {{ 'selected' if diff=='Сложная' else '' }}>Сложная</option>
+    </select>
+
+    <label>Картинка:</label>
+    <input type="file" name="image">
+    {% if route and route.image_url %}
+      <div><img src="{{ url_for('static', filename='uploads/' ~ route.image_url) }}" width="120"></div>
+    {% endif %}
+
+    <label>Карта (iframe HTML):</label>
+    <textarea name="map_embed" rows="4">{{ route.map_embed if route else '' }}</textarea>
+
+    <button type="submit">Сохранить</button>
+  </form>
+</body>
+</html>

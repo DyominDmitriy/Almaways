@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title data-i18n="_">{{ route.title }}</title>
+  <script src="/static/js/translate.js" defer></script>
+  <link rel="stylesheet" href="/static/css/cul_common.css"/>
+  <style>
+    header {
+      {% if route.image_url %}
+      background-image: url('{{ url_for('static', filename='uploads/' ~ route.image_url) }}');
+      {% else %}
+      background-image: url('../static/img/culture.jpg');
+      {% endif %}
+      background-size: cover;
+      background-position: center;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      text-decoration: none;
+      color:white;
+    }
+    .admin-edit-link{position:absolute;top:10px;right:10px;background:#fff;color:#333;padding:6px 10px;font-size:12px;border-radius:4px;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,.1);}
+    .admin-edit-link:hover{background:#f1f1f1;}
+  </style>
+</head>
+<body>
+  <header>
+    <button class="header-button" data-i18n="__">
+      <a class="a_but" data-i18n="__" href="#map">Маршрут на карте</a>
+    </button>
+    {% if current_user.is_authenticated and current_user.is_admin %}
+      <a class="admin-edit-link" href="{{ url_for('admin.edit_route', id=route.id) }}">Редактировать</a>
+    {% endif %}
+  </header>
+
+  <div class="container">
+    <a data-i18n="" href="javascript:history.back()" style="font-size: 28px;">←</a>
+    <h1 data-i18n="_">О маршруте</h1>
+    <p data-i18n="____________">{{ route.description }}</p>
+
+    {# иконки можно позже сделать динамическими #}
+    <div class="icons">
+      <div data-i18n="_">☕ Еда</div>
+      <div data-i18n="_">🧶 Пешком</div>
+      <div data-i18n="_">📷 Фото</div>
+    </div>
+
+    {# Пока не подключали точки маршрута (points). Можем позже. #}
+
+    <button class="route-done-btn" data-i18n="@" id="cul_{{ route.id }}">
+      ✔ Маршрут пройден
+    </button>
+    <button class="route-fav-btn" data-i18n="" id="cul_{{ route.id }}_fav">
+      Понравился
+    </button>
+  </div>
+
+  <div class="map" id="map">
+    {% if route.map_embed %}
+      {{ route.map_embed|safe }}
+    {% else %}
+      <p>Карта пока не загружена.</p>
+    {% endif %}
+  </div>
+
+  {# Скрипты прогресса — твои же, просто id подставляем динамически #}
+  <script>
+  async function loadInitialState() {
+      try {
+          const response = await fetch('/get_current_user_state');
+          const data = await response.json();
+          if (data.completed_routes) {
+              Object.entries(data.completed_routes).forEach(([routeId, isCompleted]) => {
+                  const button = document.getElementById(routeId);
+                  if (button) {
+                      button.textContent = isCompleted ? 'Спасибо!' : '✔ Маршрут пройден';
+                      button.classList.toggle('done', isCompleted);
+                  }
+              });
+          }
+      } catch (error) { console.error("Ошибка загрузки состояния:", error); }
+  }
+
+  async function handleRouteClick(button) {
+      const routeId = button.id;
+      const isCurrentlyCompleted = button.classList.contains('done');
+      const newState = !isCurrentlyCompleted;
+      try {
+          button.disabled = true;
+          const response = await fetch('/update_route_state', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ route_id: routeId, new_state: newState })
+          });
+          const result = await response.json();
+          if (result.status === "success") {
+              button.textContent = newState ? 'Спасибо!' : '✔ Маршрут пройден';
+              button.classList.toggle('done', newState);
+          }
+      } catch (error) {
+          console.error("Ошибка обновления:", error);
+          button.textContent = isCurrentlyCompleted ? 'Спасибо!' : '✔ Маршрут пройден';
+          button.classList.toggle('done', isCurrentlyCompleted);
+      } finally { button.disabled = false; }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+      loadInitialState();
+      document.querySelectorAll('.route-done-btn').forEach(btn => {
+          btn.onclick = () => handleRouteClick(btn);
+      });
+  });
+  </script>
+
+  <script>
+  async function loadInitialStateFav() {
+      try {
+          const response = await fetch('/get_current_user_state_fav');
+          const data = await response.json();
+          if (data.favourite_routes) {
+              Object.entries(data.favourite_routes).forEach(([routeId, isFavourite]) => {
+                  const button = document.getElementById(routeId);
+                  if (button) {
+                      button.textContent = isFavourite ? 'в избранном ' : 'Понравился ';
+                      button.classList.toggle('done', isFavourite);
+                  }
+              });
+          }
+      } catch (error) { console.error("Ошибка загрузки состояния:", error); }
+  }
+  async function handleRouteClickFav(button) {
+      const routeId = button.id;
+      const isCurrentlyFavourite = button.classList.contains('done');
+      const newState = !isCurrentlyFavourite;
+      try {
+          button.disabled = true;
+          const response = await fetch('/update_route_state_fav', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ route_id: routeId, new_state_fav: newState })
+          });
+          const result = await response.json();
+          if (result.status === "success") {
+              button.textContent = newState ? 'в Избраном' : 'Понравился ';
+              button.classList.toggle('done', newState);
+          }
+      } catch (error) {
+          console.error("Ошибка обновления:", error);
+          button.textContent = isCurrentlyFavourite ? 'в Избраном' : 'Понравился ';
+          button.classList.toggle('done', isCurrentlyFavourite);
+      } finally { button.disabled = false; }
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+      loadInitialStateFav();
+      document.querySelectorAll('.route-fav-btn').forEach(btn => {
+          btn.onclick = () => handleRouteClickFav(btn);
+      });
+  });
+  </script>
+</body>
+</html>

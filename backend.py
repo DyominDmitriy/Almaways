@@ -10,6 +10,8 @@ from flask import request, redirect, url_for, flash
 from flask_login import login_required, current_user
 import os
 from werkzeug.utils import secure_filename
+from admin import admin_bp
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "mishadimamax200620072008"
@@ -17,6 +19,65 @@ app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(days=365)
 login_manager = LoginManager()
 login_manager.init_app(app)
 oauth = OAuth(app)
+
+
+
+
+app.register_blueprint(admin_bp)
+
+# ... после create_session global_init как было ...
+
+@app.route('/cultural_routes')
+def cultural_routes():
+    # тянем данные из БД — чтобы карточки были редактируемые
+    db_sess = db_session.create_session()
+    routes = db_sess.query(Route).order_by(Route.id).all()
+    db_sess.close()
+    return render_template("cultural_routes.html", routes=routes, current_user=current_user)
+
+# --- Новый универсальный маршрут ---
+@app.route('/cul/<int:route_id>')
+def cul_dynamic(route_id):
+    db_sess = db_session.create_session()
+    route = db_sess.query(Route).get(route_id)
+    db_sess.close()
+    if not route:
+        # если нет в БД — 404 или верни старую статичную страницу при совпадении
+        # (пример: cul_1.html ещё существует)
+        template_name = f"cul_{route_id}.html"
+        try:
+            return render_template(template_name)  # fallback
+        except:
+            from flask import abort
+            abort(404)
+    return render_template("route_detail.html", route=route, current_user=current_user)
+
+# --- Совместимость со старыми урлами ---
+@app.route('/cul_1')
+def cul_1():
+    return redirect(url_for('cul_dynamic', route_id=1))
+
+@app.route('/cul_2')
+def cul_2():
+    return redirect(url_for('cul_dynamic', route_id=2))
+
+@app.route('/cul_3')
+def cul_3():
+    return redirect(url_for('cul_dynamic', route_id=3))
+
+@app.route('/cul_4')
+def cul_4():
+    return redirect(url_for('cul_dynamic', route_id=4))
+
+@app.route('/cul_5')
+def cul_5():
+    return redirect(url_for('cul_dynamic', route_id=5))
+
+@app.route('/cul_6')
+def cul_6():
+    return redirect(url_for('cul_dynamic', route_id=6))
+
+
 
 @app.route('/')
 @app.route('/index')
@@ -163,33 +224,6 @@ def get_routes():
 def info():
     return render_template("info.html")
 
-@app.route('/cultural_routes')
-def cultural_routes():
-    return render_template("cultural_routes.html")
-
-@app.route('/cul_1')
-def cul_1():
-    return render_template("cul_1.html")
-
-@app.route('/cul_2')
-def cul_2():
-    return render_template("cul_2.html")
-
-@app.route('/cul_3')
-def cul_3():
-    return render_template("cul_3.html")
-
-@app.route('/cul_4')
-def cul_4():
-    return render_template("cul_4.html")
-
-@app.route('/cul_5')
-def cul_5():
-    return render_template("cul_5.html")
-
-@app.route('/cul_6')
-def cul_6():
-    return render_template("cul_6.html")
 
 @app.route('/gastronom')
 def gastronom():
