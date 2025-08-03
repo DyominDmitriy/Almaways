@@ -303,10 +303,10 @@ google = oauth.register(
     name='google',
     client_id="376838788269-k120re8lp9bjv3dv31i6s9d0ekpkh5tq.apps.googleusercontent.com",
     client_secret="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",
-    access_token_url='https://oauth2.googleapis.com/token',
+    access_token_url='  s://oauth2.googleapis.com/token',
     authorize_url='https://accounts.google.com/o/oauth2/auth',
     jwks_uri='https://www.googleapis.com/oauth2/v3/certs',  
-    client_kwargs={'scope': 'openid email profile', 'nonce': 'random_nonce_value'}
+    client_kwargs={'scope': 'openid email profile'}
 )
 
 def load_user(user_id):
@@ -318,7 +318,7 @@ def login_google():
     nonce = secrets.token_urlsafe(16)
     session["nonce"] = nonce
     return google.authorize_redirect(
-        url_for("auth_callback", _external=True),
+        google.authorize_redirect("https://almaways-orcm.onrender.com/login/callback", nonce=nonce) ,
         nonce=nonce
     )
 
