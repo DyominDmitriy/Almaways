@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timedelta
 from flask import Flask, render_template, redirect, request, session, jsonify, url_for, flash
 from data import db_session
 from data.user import User, Route
@@ -12,11 +12,11 @@ import os
 from werkzeug.utils import secure_filename
 from admin import admin_bp
 import secrets 
-
+import re
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "mishadimamax200620072008"
-app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(days=365)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=365)
 login_manager = LoginManager()
 login_manager.init_app(app)
 oauth = OAuth(app)
@@ -106,65 +106,29 @@ def get_current_user_state():
 def get_user_progress():
     db_sess = db_session.create_session()
     try:
+        # Фикс: ищем маршруты с ключами route_cul_*
         total_routes = db_sess.query(Route).filter(Route.route_key.like("route_cul_%")).count()
+        total_hours = current_user.get_total_hours(db_sess)
     finally:
         db_sess.close()
 
     completed = sum(
         1 for key, v in (current_user.completed_routes or {}).items()
-        if key.startswith("route_cul_") and v
+        if re.match(r'(?:route_)?cul_\d+', key) and v
     )
+
     return jsonify({
         "completed": completed,
         "total_routes": total_routes,
-        "progress": round((completed / total_routes * 100) if total_routes else 0)
+        "progress": round((completed / total_routes * 100) if total_routes else 0),
+        "total_hours": total_hours,
+        "total_photos": current_user.get_total_photos(),
+        "weekly_streak": current_user.weekly_streak
     })
 
 
-@app.route('/update_route_state', methods=['POST'])
-@login_required
-def update_route_state():
-    data = request.get_json() or {}
-    route_id = data.get("route_id")
-    new_state = data.get("new_state")
 
-    if not route_id or new_state is None:
-        return jsonify({"status": "error", "message": "Missing parameters"}), 400
 
-    db_sess = db_session.create_session()
-    try:
-        user = db_sess.merge(current_user)
-
-        # Инициализация словаря
-        if not user.completed_routes:
-            user.completed_routes = {}
-
-        key = f"route_{route_id}"
-        user.completed_routes[key] = bool(new_state)
-
-        # Считаем прогресс: сколько выполнено / общее кол-во маршрутов
-        total_routes = db_sess.query(Route).count()
-        completed_count = sum(
-            1 for key, v in user.completed_routes.items()
-            if key.startswith("route_") or key.startswith("cul_")  and v
-        )
-        user.progress = int((completed_count / total_routes) * 100) if total_routes > 0 else 0
-
-        db_sess.commit()
-        db_sess.refresh(user)
-
-        return jsonify({
-            "status": "success",
-            "new_state": bool(new_state),
-            "progress": user.progress,
-            "completed_routes": user.completed_routes
-        })
-    except Exception as e:
-        db_sess.rollback()
-        print(f"Database error: {str(e)}")
-        return jsonify({"status": "error", "message": str(e)}), 500
-    finally:
-        db_sess.close()
 
 
 @app.route('/favourites')
@@ -379,15 +343,136 @@ def reg_form():
 
 def get_total_cul_routes_count():
     db_sess = db_session.create_session()
+    count = db_sess.query(Route).filter(Route.route_key.like("cul_%")).count()
+    db_sess.close()
+    return count
+
+
+
+def calculate_weekly_streak(route_dates_dict):
+    if not route_dates_dict:
+        return 0
+
+    dates = [datetime.fromisoformat(d) for d in route_dates_dict.values()]
+    if not dates:
+        return 0
+
+    weeks = set()
+    for date in dates:
+        year, week_num, _ = date.isocalendar()
+        weeks.add((year, week_num))
+
+    today = datetime.utcnow()
+    current_year, current_week, _ = today.isocalendar()
+    streak = 0
+
+    while (current_year, current_week) in weeks:
+        streak += 1
+        current_week -= 1
+        if current_week < 1:
+            current_year -= 1
+            current_week = 52
+
+    return streak
+
+
+@app.route('/update_route_state', methods=['POST'])
+@login_required
+def update_route_state():
+    data = request.get_json() or {}
+    route_id = data.get("route_id")
+    new_state = data.get("new_state")
+
+    if not route_id or new_state is None:
+        return jsonify({"status": "error", "message": "Missing parameters"}), 400
+
+    db_sess = db_session.create_session()
     try:
-        return db_sess.query(Route).filter(Route.id.like('cul_%')).count()
+        user = db_sess.merge(current_user)
+
+        # Проверяем и формируем корректный ключ
+        if route_id.startswith("route_") or route_id.startswith("cul_"):
+            key = route_id
+        else:
+            key = f"route_{route_id}"
+
+        # Обновляем completed_routes
+        if not user.completed_routes:
+            user.completed_routes = {}
+        user.completed_routes[key] = bool(new_state)
+
+        # Обновляем route_completion_dates
+        if not user.route_completion_dates:
+            user.route_completion_dates = {}
+        user.route_completion_dates[key] = datetime.utcnow().isoformat()
+
+        # Пересчитываем прогресс
+        total_routes = db_sess.query(Route).count()
+        completed_count = sum(
+            1 for k, v in user.completed_routes.items()
+            if (k.startswith("route_") or k.startswith("cul_")) and v
+        )
+        user.progress = int((completed_count / total_routes) * 100) if total_routes > 0 else 0
+
+        # Пересчёт streak
+        user.weekly_streak = calculate_weekly_streak(user.route_completion_dates)
+
+       
+
+        db_sess.commit()
+        db_sess.refresh(user)
+
+        return jsonify({
+            "status": "success",
+            "new_state": bool(new_state),
+            "progress": user.progress,
+            "completed_routes": user.completed_routes,
+            "weekly_streak": user.weekly_streak
+        })
+
+    except Exception as e:
+        db_sess.rollback()
+        print(f"Database error: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
     finally:
         db_sess.close()
 
 
+def calculate_weekly_streak(route_dates_dict):
+    if not route_dates_dict:
+        return 0
+
+    try:
+        dates = [datetime.fromisoformat(d) for d in route_dates_dict.values()]
+    except Exception as e:
+        print("Date parsing error in streak:", e)
+        return 0
+
+    weeks = set()
+    for date in dates:
+        year, week_num, _ = date.isocalendar()
+        weeks.add((year, week_num))
+
+    today = datetime.utcnow()
+    current_year, current_week, _ = today.isocalendar()
+    streak = 0
+
+    while (current_year, current_week) in weeks:
+        streak += 1
+        current_week -= 1
+        if current_week < 1:
+            current_year -= 1
+            current_week = 52
+
+    return streak
 
 
-
+@app.route('/debug_routes')
+def debug_routes():
+    db_sess = db_session.create_session()
+    routes = db_sess.query(Route).all()
+    return jsonify([r.route_key for r in routes])
 
 @app.route('/user_office')
 def user_office():
@@ -404,18 +489,25 @@ def user_office():
     avatar = user.avatar
 
     completed = len(user.get_completed_cul_ids())
-    total_routes = get_total_cul_routes_count()
+    total_routes = db_sess.query(Route).filter(Route.route_key.like("cul_%")).count()
 
     total_hours = user.get_total_hours(db_sess)
     total_photos = user.get_total_photos()
+
     if user.completed_routes is None:
         user.completed_routes = {}
         db_sess.commit()
-    
-    db_sess.close()
-    
-    print("DEBUG: completed =", completed)
-    
+
+    streak = calculate_weekly_streak(user.route_completion_dates or {})
+
+    print("=== PRIVATE OFFICE DEBUG ===")
+    print("progress:", user.progress)
+    print("weekly_streak:", user.weekly_streak)
+    print("completed_routes:", user.completed_routes)
+    print("total_routes:", total_routes)
+    print("total_hours:", total_hours)
+    print("total_photos:", total_photos)
+    print("=============================")
 
     return render_template(
         "user/user_office.html",
@@ -428,9 +520,9 @@ def user_office():
         total_routes=total_routes,
         total_hours=total_hours,
         total_photos=total_photos,
-        progress=round(completed / total_routes * 100) if total_routes else 0
+        progress=round(completed / total_routes * 100) if total_routes else 0,
+        streak=streak
     )
-
 @app.route('/login', methods=["POST", "GET"])
 def login():
     form = request.form

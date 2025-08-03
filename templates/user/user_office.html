@@ -670,6 +670,15 @@ body {
   z-index: 1;
   transition: left 0.3s ease;
 }
+.streak-box {
+  background-color: #fff0e5;
+  border-left: 6px solid orange;
+  padding: 10px 15px;
+  margin-bottom: 20px;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
   </style>
  </head>
  <body>
@@ -785,6 +794,10 @@ body {
   {{ total_routes }}
 </span>
      </div>
+     </div>
+     <div class="streak-box">
+  🔥 Вы держитесь уже <strong>{{ streak }}</strong> недель!
+</div>
      <div class="stat-card">
       <i class="fas fa-clock">
       </i>
