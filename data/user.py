@@ -9,10 +9,11 @@ from sqlalchemy import  DateTime
 from sqlalchemy import func, or_
 from sqlalchemy import text, String
 import re
+from sqlalchemy import Boolean
 
 class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     __tablename__ = 'users'
-
+    is_active = sqlalchemy.Column(sqlalchemy.Boolean, default=False, nullable=False)
     id = sqlalchemy.Column(sqlalchemy.Integer,
                     primary_key=True, unique=True)
 

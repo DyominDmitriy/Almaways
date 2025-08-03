@@ -1,30 +1,32 @@
-from datetime import datetime, timedelta
+import datetime
 from flask import Flask, render_template, redirect, request, session, jsonify, url_for, flash
 from data import db_session
 from data.user import User, Route
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from authlib.integrations.flask_client import OAuth
 import os
-from werkzeug.utils import secure_filename
 from flask import request, redirect, url_for, flash
-from flask_login import login_required, current_user
-import os
 from werkzeug.utils import secure_filename
+
+from data import db_session
+from data.user import User, Route
 from admin import admin_bp
 import secrets 
-import re
 
+
+# 2) Создать приложение только один раз
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "mishadimamax200620072008"
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=365)
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(days=365)
 login_manager = LoginManager()
 login_manager.init_app(app)
 oauth = OAuth(app)
 
-
-
-
+# 5) Зарегистрировать блюпринты и БД
 app.register_blueprint(admin_bp)
+db_session.global_init("databases/places.db")
+
+# --- Теперь идут все ваши маршруты без дубли app = Flask(...) и без mail = Mail(app) ---
 
 # ... после create_session global_init как было ...
 
@@ -250,12 +252,85 @@ def gas_6():
 def geog_obj():
     return render_template("geog_obj.html")
 
-@app.route('/user_login')
-def user_login():
-    return render_template("user/user_login.html")
+@app.route('/user_login', methods=['GET','POST'])
+def login():
+    if request.method == 'POST':
+        form = request.form
+        email    = form.get('emailInput', '').strip()
+        password = form.get('passwordInput', '').strip()
+        remember = bool(form.get('rememberMe'))
 
-@app.route('/user_reg')
+        db = db_session.create_session()
+        user = db.query(User).filter(User.email == email).first()
+
+        if not user:
+            flash('Пользователь не найден', 'error')
+            db.close()
+            return redirect('/user_login')
+
+        # Новая проверка:
+        if not user.is_active:
+            flash('Подтвердите почту перед входом. Проверьте спам или запросите повторно.', 'warning')
+            db.close()
+            return redirect('/user_login')
+
+        if user.check_password(password):
+            login_user(user, remember=remember)
+            db.close()
+            return redirect('/user_office')
+
+        flash('Неверный пароль', 'error')
+        db.close()
+        return redirect('/user_login')
+
+    return render_template('user/user_login.html')
+
+@app.route('/user_reg', methods=['GET', 'POST'])
 def user_reg():
+    if request.method == 'POST':
+        form = request.form
+        # Всегда по умолчанию берём пустую строку и обрезаем пробелы
+        email      = form.get('emailInput', '').strip()
+        password   = form.get('passwordInput', '').strip()
+        name       = form.get('nameInput', '').strip()
+        surname    = form.get('surnameInput', '').strip()
+        phone_num  = form.get('phone_num', '').strip()
+
+        # Если email пустой или неверный формат
+        if not is_valid_email(email):
+            return render_template("user/user_reg.html", error="Неверный формат email", 
+                                   email=email, name=name, surname=surname, phone=phone_num)
+
+        db_sess = db_session.create_session()
+        # Проверка дублирования почты
+        if db_sess.query(User).filter(User.email == email).first():
+            flash('Почта уже зарегистрирована', 'error')
+            db_sess.close()
+            return redirect('/user_reg')
+
+        # Создаём пользователя
+        user = User(name=name,
+                    surname=surname,
+                    email=email,
+                    phone_num=phone_num,
+                    progress=0,
+                    is_active=False)
+        user.set_password(password)
+        db_sess.add(user)
+        db_sess.commit()
+
+        # Отправляем письмо и показываем флеш
+        try:
+            send_confirmation_email(email)
+            flash('Письмо для подтверждения отправлено на почту', 'info')
+        except Exception as e:
+            flash(f'Ошибка при отправке письма: {e}', 'error')
+        finally:
+            db_sess.close()
+
+        return redirect('/user_login')
+
+    # GET-запрос – просто отрисовать форму
     return render_template("user/user_reg.html")
 
 def is_valid_email(email):
@@ -310,35 +385,30 @@ def auth_callback():
     login_user(user, remember=True)
     return redirect("/user_office")
 
-@app.route('/reg_form', methods=["POST"])
-def reg_form():
-    form = request.form
-    email = form.get('emailInput')
-    password = form.get("passwordInput")
-    name = form.get("nameInput")
-    surname = form.get("surnameInput")
-    phone_num = form.get("phone_num")
-    db_sess = db_session.create_session()
-    user = User()
-    if not is_valid_email(email):
-        return render_template("user/user_reg.html", error="Неверный формат email")
-    existing_user = db_sess.query(User).filter(User.email == email).first()
-    if existing_user:
-        from flask import flash
-        flash('Почта уже зарегистрирована', 'error')
-        db_sess.close()
+
+
+
+@app.route('/confirm/<token>')
+def confirm_email(token):
+    try:
+        email = confirm_token(token)
+    except SignatureExpired:
+        flash('Ссылка подтверждения истекла', 'error')
         return redirect('/user_reg')
-    user.name = name 
-    user.surname = surname 
-    user.email = email
-    user.phone_num = phone_num
-    user.set_password(password)
-    user.progress = 0
-    db_sess.add(user)
-    db_sess.commit()
+    except BadData:
+        flash('Неверный или повреждённый токен', 'error')
+        return redirect('/user_reg')
+
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter_by(email=email).first()
+    if not user:
+        flash('Пользователь не найден', 'error')
+    else:
+        user.is_active = True
+        db_sess.commit()
+        flash('Почта успешно подтверждена', 'success')
     db_sess.close()
-    from flask import flash
-    flash('Вы успешно зарегистрировались!', 'success')
+
     return redirect('/user_login')
 
 def get_total_cul_routes_count():
@@ -475,6 +545,7 @@ def debug_routes():
     return jsonify([r.route_key for r in routes])
 
 @app.route('/user_office')
+@login_required
 def user_office():
     db_sess = db_session.create_session()
     user = db_sess.get(User, current_user.id)
@@ -523,6 +594,7 @@ def user_office():
         progress=round(completed / total_routes * 100) if total_routes else 0,
         streak=streak
     )
+
 @app.route('/login', methods=["POST", "GET"])
 def login():
     form = request.form
