@@ -318,9 +318,9 @@ def login_google():
     nonce = secrets.token_urlsafe(16)
     session["nonce"] = nonce
     return google.authorize_redirect(
-        google.authorize_redirect("https://almaways-orcm.onrender.com/login/callback", nonce=nonce) ,
-        nonce=nonce
+        url_for("auth_callback", _external=True)
     )
+
 
 @app.route("/login/callback")
 def auth_callback():
