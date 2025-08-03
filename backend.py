@@ -318,9 +318,9 @@ def login_google():
     nonce = secrets.token_urlsafe(16)
     session["nonce"] = nonce
     return google.authorize_redirect(
-        url_for("auth_callback", _external=True)
+        url_for("auth_callback", _external=True),
+        nonce=nonce  # <-- обязательно
     )
-
 
 @app.route("/login/callback")
 def auth_callback():
