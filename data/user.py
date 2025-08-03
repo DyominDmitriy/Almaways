@@ -40,11 +40,14 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     
 
     def get_completed_cul_ids(self):
+        if not self.completed_routes:
+            return []
         return [
-            int(key.replace("route_cul_", ""))
+            int(key.split("_")[1])
             for key, value in self.completed_routes.items()
-            if key.startswith("route_cul_") and value is True
+            if key.startswith("route_") and value
         ]
+
     
     
     def set_password(self, password):

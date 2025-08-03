@@ -303,7 +303,7 @@ google = oauth.register(
     name='google',
     client_id="376838788269-k120re8lp9bjv3dv31i6s9d0ekpkh5tq.apps.googleusercontent.com",
     client_secret="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",
-    access_token_url='  s://oauth2.googleapis.com/token',
+    access_token_url='https://oauth2.googleapis.com/token',
     authorize_url='https://accounts.google.com/o/oauth2/auth',
     jwks_uri='https://www.googleapis.com/oauth2/v3/certs',  
     client_kwargs={'scope': 'openid email profile'}
@@ -408,10 +408,12 @@ def user_office():
 
     total_hours = user.get_total_hours(db_sess)
     total_photos = user.get_total_photos()
-
+    if user.completed_routes is None:
+        user.completed_routes = {}
+        db_sess.commit()
     
     db_sess.close()
-
+    
     print("DEBUG: total_hours =", total_hours)
     print("DEBUG: total_photos =", total_photos)
 
