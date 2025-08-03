@@ -40,12 +40,10 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     
 
     def get_completed_cul_ids(self):
-        if not self.completed_routes:
-            return []
         return [
-            int(key.split("_")[1])
+            int(key.split("_")[2])  # ✅ теперь берётся число после 'route_cul_'
             for key, value in self.completed_routes.items()
-            if key.startswith("route_") and value
+            if key.startswith("route_cul_") and value
         ]
 
     

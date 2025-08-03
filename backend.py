@@ -414,8 +414,8 @@ def user_office():
     
     db_sess.close()
     
-    print("DEBUG: total_hours =", total_hours)
-    print("DEBUG: total_photos =", total_photos)
+    print("DEBUG: completed =", completed)
+    
 
     return render_template(
         "user/user_office.html",
