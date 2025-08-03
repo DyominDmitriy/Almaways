@@ -11,6 +11,7 @@ from flask_login import login_required, current_user
 import os
 from werkzeug.utils import secure_filename
 from admin import admin_bp
+import secrets 
 
 
 app = Flask(__name__)
@@ -105,15 +106,18 @@ def get_current_user_state():
 def get_user_progress():
     db_sess = db_session.create_session()
     try:
-        total_routes = db_sess.query(Route).count()
+        total_routes = db_sess.query(Route).filter(Route.route_key.like("route_cul_%")).count()
     finally:
         db_sess.close()
 
-    completed = sum(1 for v in (current_user.completed_routes or {}).values() if v)
+    completed = sum(
+        1 for key, v in (current_user.completed_routes or {}).items()
+        if key.startswith("route_cul_") and v
+    )
     return jsonify({
-        "progress": current_user.progress or 0,
         "completed": completed,
-        "total_routes": total_routes
+        "total_routes": total_routes,
+        "progress": round((completed / total_routes * 100) if total_routes else 0)
     })
 
 
@@ -140,7 +144,10 @@ def update_route_state():
 
         # Считаем прогресс: сколько выполнено / общее кол-во маршрутов
         total_routes = db_sess.query(Route).count()
-        completed_count = sum(1 for v in user.completed_routes.values() if v)
+        completed_count = sum(
+            1 for key, v in user.completed_routes.items()
+            if key.startswith("route_") or key.startswith("cul_")  and v
+        )
         user.progress = int((completed_count / total_routes) * 100) if total_routes > 0 else 0
 
         db_sess.commit()
@@ -370,22 +377,57 @@ def reg_form():
     flash('Вы успешно зарегистрировались!', 'success')
     return redirect('/user_login')
 
+def get_total_cul_routes_count():
+    db_sess = db_session.create_session()
+    try:
+        return db_sess.query(Route).filter(Route.id.like('cul_%')).count()
+    finally:
+        db_sess.close()
+
+
+
+
+
+
 @app.route('/user_office')
 def user_office():
-    name = current_user.name
-    surname = current_user.surname
-    email = current_user.email
-    phone_num = current_user.phone_num
-    avatar = current_user.avatar 
     db_sess = db_session.create_session()
-    user = db_sess.merge(current_user)
+    user = db_sess.get(User, current_user.id)
+
+    if not user:
+        return "User not found", 404
+
+    name = user.name
+    surname = user.surname
+    email = user.email
+    phone_num = user.phone_num
+    avatar = user.avatar
+
+    completed = len(user.get_completed_cul_ids())
+    total_routes = get_total_cul_routes_count()
+
     total_hours = user.get_total_hours(db_sess)
-    db_sess.close()
-    db_sess = db_session.create_session()
-    user = db_sess.merge(current_user)
     total_photos = user.get_total_photos()
+
+    
     db_sess.close()
-    return render_template("user/user_office.html", total_hours=total_hours, total_photos=total_photos)
+
+    print("DEBUG: total_hours =", total_hours)
+    print("DEBUG: total_photos =", total_photos)
+
+    return render_template(
+        "user/user_office.html",
+        name=name,
+        surname=surname,
+        email=email,
+        phone_num=phone_num,
+        avatar=avatar,
+        completed=completed,
+        total_routes=total_routes,
+        total_hours=total_hours,
+        total_photos=total_photos,
+        progress=round(completed / total_routes * 100) if total_routes else 0
+    )
 
 @app.route('/login', methods=["POST", "GET"])
 def login():
@@ -488,8 +530,7 @@ def logout():
 
 def main():
     db_session.global_init("databases/places.db")
-    app.run(debug=True, host='0.0.0.0', port=7010,)
+    app.run(debug=True, host='0.0.0.0', port=7010,) 
 
 if __name__ == "__main__":
     main()
-    

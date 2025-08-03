@@ -777,13 +777,13 @@ body {
       </i>
       <div>
        <h3 data-i18n="_">
-        Пройдено маршрутов
-       </h3>
-       <span class="stat-value"  id="completed-routes">
-        0
-       </span>
-       /6
-      </div>
+        <h3>Пройдено маршрутов</h3>
+<span class="stat-value" >
+  {{ completed }}
+</span> из
+<span id="total-routes">
+  {{ total_routes }}
+</span>
      </div>
      <div class="stat-card">
       <i class="fas fa-clock">
@@ -806,44 +806,35 @@ body {
         Фотографий
        </h3>
        <span class="stat-value">
-        {{total_photos}}
+        {{ total_photos }}
+        
        </span>
       </div>
      </div>
     </section>
     <!-- Прогресс -->
     <section class="progress-section animate__animated animate__fadeInUp animate__delay-1s">
-     <div class="section-header">
-      <h2 data-i18n="_">
-       Ваш прогресс
-      </h2>
-      <a class="see-all" data-i18n="" href="#">
-       Подробнее
-      </a>
-     </div>
-     <div class="progress-container">
-      <div class="progress-bar">
-       <div class="progress-fill" id="progress-fill">
-       </div>
-      </div>
-      <div class="progress-labels">
-       <span data-i18n="_">
-        Начальный уровень
-       </span>
-       <span data-i18n="0" id="progress-percent">
-        0%
-       </span>
-       <span data-i18n="">
-        Эксперт
-       </span>
-      </div>
-     </div>
-     <div class="progress-description">
-      <p data-i18n="__6______">
-       Пройдите все 6 маршрутов, чтобы получить статус "Эксперт Казахстана"
-      </p>
-     </div>
-    </section>
+  <div class="section-header">
+    <h2 data-i18n="_">Ваш прогресс</h2>
+    <a class="see-all" data-i18n="" href="#">Подробнее</a>
+  </div>
+  <div class="progress-container">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+    <div class="progress-labels">
+      <span data-i18n="_">Начальный уровень</span>
+      <span data-i18n="0" id="progress-percent">0%</span>
+      <span data-i18n="">Эксперт</span>
+    </div>
+  </div>
+  <div class="progress-description">
+    <p data-i18n="__6______" id="progress-description">
+      Пройдите все маршруты, чтобы получить статус "Эксперт Казахстана"
+    </p>
+  </div>
+</section>
+
     <!-- Последние активности -->
     <!-- Рекомендации -->
     <section class="recommendations-section">
@@ -910,7 +901,27 @@ body {
   const switcher = document.getElementById('lang-switcher');
   const buttons = switcher.querySelectorAll('.lang-btn');
   const slider = switcher.querySelector('.slider');
+  fetch('/get_user_progress')
+  .then(response => response.json())
+  .then(data => {
+    const completed = data.completed;
+    const total = data.total_routes;
+    const percent = data.progress;
 
+    // Обновляем прогресс-бар
+    const fill = document.getElementById('progress-fill');
+    const percentLabel = document.getElementById('progress-percent');
+    const completedLabel = document.getElementById('completed-routes');
+    const totalLabel = document.getElementById('total-routes');
+
+    if (fill) fill.style.width = percent + '%';
+    if (percentLabel) percentLabel.textContent = percent + '%';
+    if (completedLabel) completedLabel.textContent = completed;
+    if (totalLabel) totalLabel.textContent = total;
+  })
+  .catch(err => {
+    console.error('Ошибка при загрузке прогресса:', err);
+  });
   buttons.forEach((btn, index) => {
     btn.addEventListener('click', () => {
       buttons.forEach(b => b.classList.remove('active'));
@@ -927,24 +938,7 @@ document.getElementById('avatar-input').addEventListener('change', function () {
   const formData = new FormData();
   formData.append('avatar', this.files[0]);
 
-  fetch('{{ url_for("upload_avatar") }}', {
-    method: 'POST',
-    body: formData
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      const newSrc = "{{ url_for('static', filename='avatars/') }}" + data.filename + "?v=" + Date.now();
-      document.getElementById('avatar-img').src = newSrc;
-    } else {
-      alert("Ошибка: " + data.error);
-    }
-  })
-  .catch(err => {
-    console.error("Ошибка загрузки:", err);
-    alert("Произошла ошибка загрузки");
-  });
-});
+  
 </script>
 <script>
    document.addEventListener('DOMContentLoaded', function() {
@@ -962,18 +956,43 @@ document.getElementById('avatar-input').addEventListener('change', function () {
     
     // Обработчики событий
     setupEventListeners();
+    fetch("/get_user_progress")
+  .then(res => res.json())
+  .then(data => {
+    const { progress = 0, completed = 0, total_routes = 0 } = data;
+
+    // Обновляем прогресс-блок
+    const fill = document.getElementById("progress-fill");
+    const percent = document.getElementById("progress-percent");
+    const description = document.getElementById("progress-description");
+
+    fill.style.width = `${progress}%`;
+    percent.textContent = `${progress}%`;
+    description.textContent = `Пройдите все ${total_routes} маршрутов, чтобы получить статус "Эксперт Казахстана"`;
+  });
+
 });
 
 // Инициализация прогресс-бара
 function initProgressBar() {
-    fetch('/get_user_progress')
-        .then(response => response.json())
-        .then(data => {
-            const progress = data.progress;
-            const maxRoutes = 6;
-            const percent = Math.min(Math.round((progress / maxRoutes) * 100), 100);
-            
-            // Анимация заполнения
+        fetch('/get_user_progress')
+            .then(response => response.json())
+            .then(data => {
+                const progress = data.progress;
+                fetch('/get_user_progress')
+    .then(response => response.json())
+    .then(data => {
+        const completed = data.completed;
+        const total = data.total_routes;
+        const progress = Math.round((completed / total) * 100);
+
+        document.getElementById('progress-bar').style.width = `${progress}%`;
+        document.getElementById('progress-text').textContent = `Прогресс: ${progress}%`;
+
+        // Если у тебя есть отрисовка маршрутов:
+        renderRoutes(total, data.completed_routes); // примерная функция
+    });
+
             const progressFill = document.getElementById('progress-fill');
             let currentPercent = 0;
             const animation = setInterval(() => {
@@ -983,8 +1002,7 @@ function initProgressBar() {
                     currentPercent += 1;
                     progressFill.style.width = `${currentPercent}%`;
                     document.getElementById('progress-percent').textContent = `${currentPercent}%`;
-                    
-                    // Обновление цвета в зависимости от прогресса
+
                     if (currentPercent < 30) {
                         progressFill.style.background = '#FF5252';
                     } else if (currentPercent < 70) {
@@ -994,8 +1012,7 @@ function initProgressBar() {
                     }
                 }
             }, 20);
-            
-            // Обновление счетчика маршрутов
+
             document.getElementById('completed-routes').textContent = progress;
         })
         .catch(error => {

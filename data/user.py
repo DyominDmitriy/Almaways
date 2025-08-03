@@ -8,7 +8,7 @@ from .db_session import SqlAlchemyBase
 from sqlalchemy import  DateTime
 from sqlalchemy import func, or_
 from sqlalchemy import text, String
-
+import re
 
 class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     __tablename__ = 'users'
@@ -28,6 +28,8 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
 
     progress = sqlalchemy.Column(sqlalchemy.Integer)
 
+    completed_routes = sqlalchemy.Column(sqlalchemy.JSON, default=dict) 
+
     avatar = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
     is_admin = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
@@ -35,10 +37,15 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     favourite_routes = sqlalchemy.Column(sqlalchemy.JSON, default=lambda: {
     f"cul_{i}.fav": False for i in range(1, 7)  # 6 маршрутов
 })
+    
 
-    completed_routes = sqlalchemy.Column(sqlalchemy.JSON, default=lambda: {
-    f"cul_{i}": False for i in range(1, 7)  # 6 маршрутов
-})
+    def get_completed_cul_ids(self):
+        return [
+            int(key.replace("route_cul_", ""))
+            for key, value in self.completed_routes.items()
+            if key.startswith("route_cul_") and value is True
+        ]
+    
     
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -49,27 +56,33 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
         if not self.completed_routes:
             return 0
 
-        # Получаем ID завершенных маршрутов (где значение True)
-        completed_ids = [int(route_id.replace('cul_', '')) 
-                        for route_id, completed in self.completed_routes.items() 
-                        if completed]
+        # Получаем ID завершенных маршрутов
+        completed_ids = []
+        for route_id in self.completed_routes:
+            match = re.match(r'route_cul_(\d+)', route_id)
+            if match and self.completed_routes[route_id]:
+                completed_ids.append(int(match.group(1)))
 
         # Запрашиваем длительность этих маршрутов из БД
         routes = db_sess.query(Route.duration).filter(Route.id.in_(completed_ids)).all()
         
-        # Суммируем часы (предполагаем, что duration в формате "2 часа")
+        # Суммируем часы
         total_hours = 0
         for (duration,) in routes:
             if duration:
-                hours = duration  # Извлекаем число из строки "2 часа"
-                total_hours += hours
+                total_hours += duration  # если duration уже число
 
         return total_hours
     def get_total_photos(self):
         if not self.completed_routes:
             return 0
-        # Считаем количество завершённых маршрутов (True в completed_routes)
-        return sum(1 for completed in self.completed_routes.values() if completed)
+
+        # Считаем количество завершённых маршрутов с ключом route_cul_*
+        return sum(
+            1 for key, completed in self.completed_routes.items()
+            if key.startswith("route_cul_") and completed
+        )
+
     @staticmethod
     def get_popular_routes(db_sess, limit=5):
         """Упрощенная и надежная версия для SQLite"""
@@ -131,6 +144,7 @@ class Route(SqlAlchemyBase):
     __tablename__ = 'routes'
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, unique=True)
+    route_key = sqlalchemy.Column(sqlalchemy.String, nullable=False, unique=True)
     title = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     short_description = sqlalchemy.Column(sqlalchemy.String, nullable=True)   # NEW
     description = sqlalchemy.Column(sqlalchemy.Text, nullable=True)           # (было description — оставляем)
