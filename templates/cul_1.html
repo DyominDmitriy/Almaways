@@ -1,0 +1,14 @@
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+      loadInitialState();
+      document.querySelectorAll('.route-done-btn').forEach(btn => {
+          btn.onclick = () => handleRouteClick(btn);
+      });
+  });
+  document.addEventListener('DOMContentLoaded', () => {
+      loadInitialStateFav();
+      document.querySelectorAll('.route-fav-btn').forEach(btn => {
+          btn.onclick = () => handleRouteClickFav(btn);
+      });
+  });
+</script> 

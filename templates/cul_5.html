@@ -1,0 +1,25 @@
+<script>
+  const isAuthenticated = {{ 'true' if current_user.is_authenticated else 'false' }};
+  document.addEventListener('DOMContentLoaded', () => {
+      loadInitialState();
+      loadInitialStateFav();
+      document.querySelectorAll('.route-done-btn').forEach(btn => {
+          btn.onclick = () => {
+              if (!isAuthenticated) {
+                  window.location.href = '/user_reg';
+                  return;
+              }
+              handleRouteClick(btn);
+          };
+      });
+      document.querySelectorAll('.route-fav-btn').forEach(btn => {
+          btn.onclick = () => {
+              if (!isAuthenticated) {
+                  window.location.href = '/user_reg';
+                  return;
+              }
+              handleRouteClickFav(btn);
+          };
+      });
+  });
+</script> 

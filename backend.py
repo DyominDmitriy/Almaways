@@ -10,6 +10,7 @@ from flask import request, redirect, url_for, flash
 from flask_login import login_required, current_user
 import os
 from werkzeug.utils import secure_filename
+import secrets
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "mishadimamax200620072008"
@@ -372,7 +373,6 @@ def upload_avatar():
         ext = file.filename.rsplit('.', 1)[-1].lower()
         filename = secure_filename(f"{current_user.id}.{ext}")
         filepath = os.path.join(app.root_path, 'static', 'avatars', filename)
-        file.save(filepath)
 
         # Удаляем старый аватар, если он есть и не дефолтный
         session = db_session.create_session()
