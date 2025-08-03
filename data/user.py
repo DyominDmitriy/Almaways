@@ -38,15 +38,35 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     favourite_routes = sqlalchemy.Column(sqlalchemy.JSON, default=lambda: {
     f"cul_{i}.fav": False for i in range(1, 7)  # 6 маршрутов
 })
+    route_completion_dates = sqlalchemy.Column(sqlalchemy.JSON, default={})
     
+    weekly_streak = sqlalchemy.Column(sqlalchemy.Integer, default=0)
+
+    is_active = sqlalchemy.Column(sqlalchemy.Boolean, default=False, nullable=False)
 
     def get_completed_cul_ids(self):
-        return [
-            int(key.split("_")[2])  # ✅ теперь берётся число после 'route_cul_'
-            for key, value in self.completed_routes.items()
-            if key.startswith("route_cul_") and value
-        ]
+        import re
+        if not self.completed_routes:
+            return []
+        completed_ids = []
+        for route_id, is_done in self.completed_routes.items():
+            if is_done:
+                match = re.match(r'(?:route_)?cul_(\d+)', route_id)
+                if match:
+                    completed_ids.append(f"route_cul_{match.group(1)}")
+        return completed_ids
 
+    def get_total_hours(self, db_sess):
+        completed_ids = self.get_completed_cul_ids()
+        if not completed_ids:
+            return 0
+        routes = db_sess.query(Route).filter(Route.route_key.in_(completed_ids)).all()
+        return sum(route.duration or 0 for route in routes)
+
+    def get_total_photos(self):
+        if not self.completed_routes:
+            return 0
+        return sum(1 for k, v in self.completed_routes.items() if v and k.startswith("cul_") and k.endswith("_photo"))
     
     
     def set_password(self, password):
@@ -54,27 +74,7 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
-    def get_total_hours(self, db_sess):
-        if not self.completed_routes:
-            return 0
-
-        # Получаем ID завершенных маршрутов
-        completed_ids = []
-        for route_id in self.completed_routes:
-            match = re.match(r'route_cul_(\d+)', route_id)
-            if match and self.completed_routes[route_id]:
-                completed_ids.append(int(match.group(1)))
-
-        # Запрашиваем длительность этих маршрутов из БД
-        routes = db_sess.query(Route.duration).filter(Route.id.in_(completed_ids)).all()
-        
-        # Суммируем часы
-        total_hours = 0
-        for (duration,) in routes:
-            if duration:
-                total_hours += duration  # если duration уже число
-
-        return total_hours
+    
     def get_total_photos(self):
         if not self.completed_routes:
             return 0
