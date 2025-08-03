@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Админка: Маршруты</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+  <h1>Маршруты (Админ)</h1>
+  <p><a class="btn" href="{{ url_for('admin.add_route') }}">➕ Добавить маршрут</a>
+     <a class="btn" href="{{ url_for('cultural_routes') }}">← Назад к списку для пользователей</a></p>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Картинка</th>
+        <th>Название</th>
+        <th>Кратко</th>
+        <th>Длительность</th>
+        <th>Сложность</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in routes %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{% if r.image_url %}<img src="{{ url_for('static', filename='uploads/' ~ r.image_url) }}" width="60">{% endif %}</td>
+        <td>{{ r.title }}</td>
+        <td>{{ r.short_description }}</td>
+        <td>{{ r.duration }}</td>
+        <td>{{ r.difficulty }}</td>
+        <td>
+          <a href="{{ url_for('admin.edit_route', id=r.id) }}">Ред.</a> |
+          <a href="{{ url_for('admin.delete_route', id=r.id) }}" onclick="return confirm('Удалить?')">🗑</a> |
+          <a href="{{ url_for('cul_dynamic', route_id=r.id) }}" target="_blank">Открыть</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

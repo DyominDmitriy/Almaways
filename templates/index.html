@@ -1864,48 +1864,44 @@
     </div>
    </section>
    <!-- Popular Routes -->
-   <section class="popular-routes">
-    <h2 data-i18n="_">
-     Популярные Маршруты
-    </h2>
-    {% if not popular_routes %}
-    <p class="no-routes" data-i18n="_____">
-     Пока нет данных о популярных маршрутах
-    </p>
-    {% else %}
-    <div class="popular-scroll">
-     {% for route in popular_routes %}
-     <div class="popular-card">
-      <img alt="{{ route.title }}" src="{{ route.image_url if route.image_url else url_for('static', filename='img/default_route.jpg') }}"/>
-      <div class="info">
-       <h3>
-        {{ route.title }}
-       </h3>
-       <p class="description">
-        {{ route.description|truncate(80) }}
-       </p>
-       <div class="meta">
-        <span>
-         ⏱ {{ route.duration }} ч
-        </span>
-        <span>
-         ⚡ {{ route.difficulty }}
-        </span>
-       </div>
-       <div class="popularity">
-        ★ {{ "%.0f"|format(route.popularity * 50) }}%
-       </div>
+<section class="popular-routes">
+  <h2 data-i18n="_">Популярные Маршруты</h2>
+
+  {% if not popular_routes %}
+    <p class="no-routes" data-i18n="_____">Пока нет данных о популярных маршрутах</p>
+  {% else %}
+    <div class="popular-scroll" id="popular-scroll-id">
+      {% for route in popular_routes %}
+      <div class="popular-card">
+        <img alt="{{ route.title|default('Маршрут') }}"
+             src="{{ route.image_url if route.image_url else url_for('static', filename='img/default_route.jpg') }}"/>
+
+        <div class="info">
+          <h3>{{ route.title|default('Без названия') }}</h3>
+          <p class="description">
+  {{ route.description|default('', true)|truncate(80) }}
+</p>
+
+          <div class="meta">
+            <span>⏱ {{ route.duration|default(0) }} ч</span>
+            <span>⚡ {{ route.difficulty|default('—') }}</span>
+          </div>
+          <div class="popularity">
+            {% set pop = route.popularity|default(0.0) %}
+            ★ {{ "%.0f"|format(pop * 50) }}%
+          </div>
+        </div>
+
+        <div class="actions">
+          <a data-i18n="!!" href="{{ url_for('cul_dynamic', route_id=route.id) }}">
+            Подробнее
+          </a>
+        </div>
       </div>
-      <div class="actions">
-       <a data-i18n="!!" href="/{{'cul_' ~ route.id}}">
-        Подробнее
-       </a>
-      </div>
-     </div>
-     {% endfor %}
+      {% endfor %}
     </div>
-    {% endif %}
-   </section>
+  {% endif %}
+</section>
    <!-- Testimonials Section -->
    <section class="testimonials" id="testimonials">
     <h2 class="section-title" data-i18n="_">

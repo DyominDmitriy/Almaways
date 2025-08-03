@@ -30,6 +30,7 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
 
     avatar = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
+    is_admin = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
 
     favourite_routes = sqlalchemy.Column(sqlalchemy.JSON, default=lambda: {
     f"cul_{i}.fav": False for i in range(1, 7)  # 6 маршрутов
@@ -129,10 +130,11 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
 class Route(SqlAlchemyBase):
     __tablename__ = 'routes'
 
-    id = sqlalchemy.Column(sqlalchemy.Integer,
-                        primary_key=True, unique=True)
-    title = sqlalchemy.Column(sqlalchemy.String)
-    description = sqlalchemy.Column(sqlalchemy.Text)
-    image_url = sqlalchemy.Column(sqlalchemy.String)
-    duration = sqlalchemy.Column(sqlalchemy.FLOAT)
-    difficulty = sqlalchemy.Column(sqlalchemy.String)
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, unique=True)
+    title = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    short_description = sqlalchemy.Column(sqlalchemy.String, nullable=True)   # NEW
+    description = sqlalchemy.Column(sqlalchemy.Text, nullable=True)           # (было description — оставляем)
+    image_url = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    duration = sqlalchemy.Column(sqlalchemy.Float, nullable=True)             # часы
+    difficulty = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    map_embed = sqlalchemy.Column(sqlalchemy.Text, nullable=True)  

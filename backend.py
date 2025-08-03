@@ -11,6 +11,8 @@ from flask_login import login_required, current_user
 import os
 from werkzeug.utils import secure_filename
 import secrets
+from admin import admin_bp
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "mishadimamax200620072008"
@@ -18,6 +20,65 @@ app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(days=365)
 login_manager = LoginManager()
 login_manager.init_app(app)
 oauth = OAuth(app)
+
+
+
+
+app.register_blueprint(admin_bp)
+
+# ... после create_session global_init как было ...
+
+@app.route('/cultural_routes')
+def cultural_routes():
+    # тянем данные из БД — чтобы карточки были редактируемые
+    db_sess = db_session.create_session()
+    routes = db_sess.query(Route).order_by(Route.id).all()
+    db_sess.close()
+    return render_template("cul/cultural_routes.html", routes=routes, current_user=current_user)
+
+# --- Новый универсальный маршрут ---
+@app.route('/cul/<int:route_id>')
+def cul_dynamic(route_id):
+    db_sess = db_session.create_session()
+    route = db_sess.query(Route).get(route_id)
+    db_sess.close()
+    if not route:
+        # если нет в БД — 404 или верни старую статичную страницу при совпадении
+        # (пример: cul_1.html ещё существует)
+        template_name = f"cul/cul_{route_id}.html"
+        try:
+            return render_template(template_name)  # fallback
+        except:
+            from flask import abort
+            abort(404)
+    return render_template("cul/route_detail.html", route=route, current_user=current_user)
+
+# --- Совместимость со старыми урлами ---
+@app.route('/cul_1')
+def cul_1():
+    return redirect(url_for('cul/cul_dynamic', route_id=1))
+
+@app.route('/cul_2')
+def cul_2():
+    return redirect(url_for('cul/cul_dynamic', route_id=2))
+
+@app.route('/cul_3')
+def cul_3():
+    return redirect(url_for('cul/cul_dynamic', route_id=3))
+
+@app.route('/cul_4')
+def cul_4():
+    return redirect(url_for('cul/cul_dynamic', route_id=4))
+
+@app.route('/cul_5')
+def cul_5():
+    return redirect(url_for('cul/cul_dynamic', route_id=5))
+
+@app.route('/cul_6')
+def cul_6():
+    return redirect(url_for('cul/cul_dynamic', route_id=6))
+
+
 
 @app.route('/')
 @app.route('/index')
@@ -43,33 +104,54 @@ def get_current_user_state():
 @app.route('/get_user_progress')
 @login_required
 def get_user_progress():
+    db_sess = db_session.create_session()
+    try:
+        total_routes = db_sess.query(Route).count()
+    finally:
+        db_sess.close()
+
+    completed = sum(1 for v in (current_user.completed_routes or {}).values() if v)
     return jsonify({
-        "progress": current_user.progress,
-        "max_routes": 6
+        "progress": current_user.progress or 0,
+        "completed": completed,
+        "total_routes": total_routes
     })
+
 
 @app.route('/update_route_state', methods=['POST'])
 @login_required
 def update_route_state():
-    data = request.get_json()
+    data = request.get_json() or {}
     route_id = data.get("route_id")
     new_state = data.get("new_state")
+
     if not route_id or new_state is None:
         return jsonify({"status": "error", "message": "Missing parameters"}), 400
+
     db_sess = db_session.create_session()
     try:
         user = db_sess.merge(current_user)
-        if user.completed_routes is None:
-            user.completed_routes = {f"cul_{i}": False for i in range(1, 7)}
-        user.completed_routes[route_id] = new_state
-        user.progress = sum(1 for v in user.completed_routes.values() if v)
+
+        # Инициализация словаря
+        if not user.completed_routes:
+            user.completed_routes = {}
+
+        key = f"route_{route_id}"
+        user.completed_routes[key] = bool(new_state)
+
+        # Считаем прогресс: сколько выполнено / общее кол-во маршрутов
+        total_routes = db_sess.query(Route).count()
+        completed_count = sum(1 for v in user.completed_routes.values() if v)
+        user.progress = int((completed_count / total_routes) * 100) if total_routes > 0 else 0
+
         db_sess.commit()
         db_sess.refresh(user)
+
         return jsonify({
             "status": "success",
-            "new_state": new_state,
+            "new_state": bool(new_state),
             "progress": user.progress,
-            "all_routes": user.completed_routes
+            "completed_routes": user.completed_routes
         })
     except Exception as e:
         db_sess.rollback()
@@ -77,6 +159,7 @@ def update_route_state():
         return jsonify({"status": "error", "message": str(e)}), 500
     finally:
         db_sess.close()
+
 
 @app.route('/favourites')
 @login_required
@@ -164,33 +247,6 @@ def get_routes():
 def info():
     return render_template("info.html")
 
-@app.route('/cultural_routes')
-def cultural_routes():
-    return render_template("cul/cultural_routes.html")
-
-@app.route('/cul_1')
-def cul_1():
-    return render_template("cul/cul_1.html")
-
-@app.route('/cul_2')
-def cul_2():
-    return render_template("cul/cul_2.html")
-
-@app.route('/cul_3')
-def cul_3():
-    return render_template("cul/cul_3.html")
-
-@app.route('/cul_4')
-def cul_4():
-    return render_template("cul/cul_4.html")
-
-@app.route('/cul_5')
-def cul_5():
-    return render_template("cul/cul_5.html")
-
-@app.route('/cul_6')
-def cul_6():
-    return render_template("cul/cul_6.html")
 
 @app.route('/gastronom')
 def gastronom():

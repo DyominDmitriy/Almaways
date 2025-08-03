@@ -144,7 +144,7 @@
    <div class="route-grid">
     {% for route in routes %}
     <div class="route-card" data-route-id="{{ route.id }}">
-     <img alt="{{ route.title }}" class="route-image" src="{{ route.image_url or url_for('static', filename='img/default_route.jpg') }}"/>
+     <img alt="{{ route.title }}" class="route-image" src="{{url_for('static', filename='uploads/' ~ route.image_url) or url_for('static', filename='img/default_route.jpg') }}"/>
      <div class="route-info">
       <h2>
        {{ route.title }}
