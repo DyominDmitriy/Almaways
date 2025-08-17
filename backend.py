@@ -20,6 +20,7 @@ from data import db_session
 from data.user import User, Route
 from admin import admin_bp
 from email_service import is_valid_email, send_confirmation_email, confirm_token
+import time  # для уникальных имён файлов
 
 # 1) Загрузить .env до всего остального
 load_dotenv()
@@ -535,6 +536,7 @@ def user_office():
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'avatars')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -544,41 +546,50 @@ def allowed_file(filename):
 def upload_avatar():
     try:
         if 'avatar' not in request.files:
-            return jsonify({'error': 'No file uploaded'}), 400
+            return jsonify({'success': False, 'error': 'No file uploaded'}), 400
 
         file = request.files['avatar']
         if file.filename == '':
-            return jsonify({'error': 'Empty filename'}), 400
+            return jsonify({'success': False, 'error': 'Empty filename'}), 400
+
+        # проверяем расширение (у тебя уже есть allowed_file/ALLOWED_EXTENSIONS)
+        if not allowed_file(file.filename):
+            return jsonify({'success': False, 'error': 'Only JPG/PNG/JPEG/WEBP/GIF'}), 400
 
         ext = file.filename.rsplit('.', 1)[-1].lower()
-        filename = secure_filename(f"{current_user.id}.{ext}")
-        filepath = os.path.join(app.root_path, 'static', 'avatars', filename)
+
+        # уникальное имя, чтобы не упираться в кэш браузера
+        filename = secure_filename(f"{current_user.id}_{int(time.time())}.{ext}")
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+        # сохраняем ОДИН раз
         file.save(filepath)
 
-        # Удаляем старый аватар, если он есть и не дефолтный
-        session = db_session.create_session()
-        user = session.query(User).get(current_user.id)
-        old_avatar = user.avatar
+        # обновляем БД
+        db = db_session.create_session()
+        try:
+            user = db.query(User).get(current_user.id)
+            old_avatar = user.avatar
+            user.avatar = filename
+            db.commit()
+        finally:
+            db.close()
+
+        # удаляем старый файл, если он не дефолтный
         if old_avatar and old_avatar != 'default.png':
-            old_avatar_path = os.path.join(app.root_path, 'static', 'avatars', old_avatar)
-            if os.path.exists(old_avatar_path) and old_avatar_path != filepath:
+            old_path = os.path.join(app.config['UPLOAD_FOLDER'], old_avatar)
+            if os.path.exists(old_path) and old_path != filepath:
                 try:
-                    os.remove(old_avatar_path)
-                except Exception as e:
-                    print(f"Не удалось удалить старый аватар: {e}")
-
-        file.save(filepath)
-
-        # Обновляем поле в БД
-        user = session.query(User).get(current_user.id)
-        user.avatar = filename
-        session.commit()
+                    os.remove(old_path)
+                except OSError:
+                    pass
 
         return jsonify({'success': True, 'filename': filename})
-    
+
     except Exception as e:
         print("🔥 Ошибка при загрузке:", e)
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/posibiletes')
 def posibiletes( ):
