@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registration</title>
@@ -35,7 +36,9 @@
         </div>
         
         <div class="form-body">
-            <form method="POST" action="/user_login">
+            <form id="loginForm" method="POST" action="{{ url_for('login') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div id="loginError" class="text-red-500 mt-2"></div>
                 <div class="form-group">
                     <input type="email" class="form-input" id="emailInput" name="emailInput" placeholder=" " required autocomplete="username">
                     <label for="emailInput" class="form-label">Email Address</label>
@@ -81,6 +84,29 @@
     </div>
 
     <script>
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+            document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const form  = e.target;
+            const data  = new FormData(form);
+            const res   = await fetch(form.action, {
+                method: 'POST',
+                body: data,
+                headers: { 
+                'Accept': 'application/json',
+                'X-CSRFToken': csrfToken   // 🔑 добавляем токен
+                }
+            });
+            const json = await res.json();
+            const err  = document.getElementById('loginError');
+
+            if (res.ok && json.success) {
+                window.location.href = '/user_office';
+            } else {
+                err.textContent = json.message || 'Неправильный email или пароль';
+            }
+            });
+            
         function togglePassword() {
             const passwordInput = document.getElementById('passwordInput');
             const icon = document.querySelector('.password-toggle i');

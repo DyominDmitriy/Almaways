@@ -2,7 +2,7 @@ import os
 import datetime
 import secrets
 from dotenv import load_dotenv
-
+import magic
 from flask import (
     Flask, render_template, redirect, request,
     session, jsonify, url_for, flash, render_template_string, abort, jsonify
@@ -21,12 +21,14 @@ from data.user import User, Route
 from admin import admin_bp
 from email_service import is_valid_email, send_confirmation_email, confirm_token
 
+from flask_wtf.csrf import CSRFProtect
+
 # 1) Загрузить .env до всего остального
 load_dotenv()
 
 # 2) Создать приложение только один раз
 app = Flask(__name__)
-
+csrf = CSRFProtect(app)
 # 3) Единая конфигурация из переменных окружения
 app.config.update(
     SECRET_KEY       = os.getenv("SECRET_KEY"),
@@ -39,8 +41,9 @@ app.config.update(
     MAIL_PASSWORD    = os.getenv("MAIL_PASSWORD"),
     PERMANENT_SESSION_LIFETIME = datetime.timedelta(days=365),
     UPLOAD_FOLDER    = os.path.join(app.root_path, 'static', 'avatars'),
+    MAX_CONTENT_LENGTH = 6 * 1024 * 1024,
 )
-
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # 4) Инициализировать расширения
 mail = Mail(app)
 app.mail = mail   # чтобы email_service мог находить mail
@@ -405,13 +408,15 @@ def is_valid_email(email):
 
 google = oauth.register(
     name='google',
-    client_id="376838788269-k120re8lp9bjv3dv31i6s9d0ekpkh5tq.apps.googleusercontent.com",
-    client_secret="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",
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
     access_token_url='https://oauth2.googleapis.com/token',
     authorize_url='https://accounts.google.com/o/oauth2/auth',
     jwks_uri='https://www.googleapis.com/oauth2/v3/certs',  
     client_kwargs={'scope': 'openid email profile'}
 )
+if not google.client_id or not google.client_secret:
+    raise RuntimeError("Google OAuth env vars missing")
 
 def load_user(user_id):
     db_sess = db_session.create_session()
@@ -533,52 +538,93 @@ def user_office():
 
 
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'avatars')
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+@app.errorhandler(413)
+def too_large(_):
+    return jsonify(success=False, error='File too large (max 2MB)'), 413
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+import os, time
+from werkzeug.utils import secure_filename
 
 @app.route('/upload_avatar', methods=['POST'])
 @login_required
 def upload_avatar():
     try:
+        print("📥 Запрос получен")
+
         if 'avatar' not in request.files:
-            return jsonify({'error': 'No file uploaded'}), 400
+            print("❌ Поле 'avatar' не найдено в request.files")
+            return jsonify({'success': False, 'error': 'No file uploaded'}), 400
 
         file = request.files['avatar']
+        print(f"📂 Файл получен: {file.filename}")
+
         if file.filename == '':
-            return jsonify({'error': 'Empty filename'}), 400
+            print("❌ Пустое имя файла")
+            return jsonify({'success': False, 'error': 'Empty filename'}), 400
+
+        # проверка расширения
+        if not allowed_file(file.filename):
+            print("❌ Недопустимое расширение:", file.filename)
+            return jsonify({'success': False, 'error': 'Only JPG/PNG/JPEG/WebP'}), 400
 
         ext = file.filename.rsplit('.', 1)[-1].lower()
-        filename = secure_filename(f"{current_user.id}.{ext}")
-        filepath = os.path.join(app.root_path, 'static', 'avatars', filename)
-        file.save(filepath)
 
-        # Удаляем старый аватар, если он есть и не дефолтный
-        session = db_session.create_session()
-        user = session.query(User).get(current_user.id)
-        old_avatar = user.avatar
+        from PIL import Image, UnidentifiedImageError
+        try:
+            pos = file.stream.tell()
+            img = Image.open(file.stream)
+            img.verify()  # не читает всё, но валидирует контейнер
+            file.stream.seek(pos)  # откатить указатель, чтобы потом сохранить
+        except (UnidentifiedImageError, OSError):
+            return jsonify({'success': False, 'error': 'Invalid image'}), 400
+
+        filename = secure_filename(f"{current_user.id}_{int(time.time())}.{ext}")
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+        print(f"✅ Сохраняем файл как: {filepath}")
+
+        # сохраняем
+        file.save(filepath)
+        # (опционально) Стереть EXIF и слегка перекодировать
+        try:
+            with Image.open(filepath) as im:
+                im = im.convert("RGB") if im.mode not in ("RGB","RGBA") else im
+                im.save(filepath, quality=85, optimize=True)
+        except Exception:
+            pass
+        # обновляем БД
+        db = db_session.create_session()
+        try:
+            user = db.query(User).get(current_user.id)
+            print(f"👤 Текущий пользователь: {user.id}")
+            old_avatar = user.avatar
+            user.avatar = filename
+            db.commit()
+            print(f"💾 Аватар обновлён в БД: {filename}")
+        finally:
+            db.close()
+
+        # удаляем старый файл
         if old_avatar and old_avatar != 'default.png':
-            old_avatar_path = os.path.join(app.root_path, 'static', 'avatars', old_avatar)
-            if os.path.exists(old_avatar_path) and old_avatar_path != filepath:
+            old_path = os.path.join(app.config['UPLOAD_FOLDER'], old_avatar)
+            if os.path.exists(old_path) and old_path != filepath:
                 try:
-                    os.remove(old_avatar_path)
-                except Exception as e:
-                    print(f"Не удалось удалить старый аватар: {e}")
-
-        file.save(filepath)
-
-        # Обновляем поле в БД
-        user = session.query(User).get(current_user.id)
-        user.avatar = filename
-        session.commit()
+                    os.remove(old_path)
+                    print(f"🗑 Старый аватар удалён: {old_avatar}")
+                except OSError as e:
+                    print(f"⚠ Ошибка при удалении старого аватара: {e}")
 
         return jsonify({'success': True, 'filename': filename})
-    
+
     except Exception as e:
         print("🔥 Ошибка при загрузке:", e)
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/posibiletes')
 def posibiletes( ):

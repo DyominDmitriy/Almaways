@@ -22,6 +22,7 @@
       color:white;
     }
   </style>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
  </head>
  <body>
   <header>
@@ -115,6 +116,7 @@
  </body>
 </html>
 <script>
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
  // Загрузка начального состояния
   async function loadInitialState() {
       try {
@@ -146,7 +148,9 @@
           
           const response = await fetch('/update_route_state', {
               method: 'POST',
-              headers: {'Content-Type': 'application/json'},
+              headers: {'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken   // 🔑 добавляем токен
+              },
               body: JSON.stringify({
                   route_id: routeId,
                   new_state: newState
@@ -212,7 +216,9 @@
           
           const response = await fetch('/update_route_state_fav', {
               method: 'POST',
-              headers: {'Content-Type': 'application/json'},
+              headers: {'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken   // 🔑 добавляем токен
+              },
               body: JSON.stringify({
                   route_id: routeId,
                   new_state_fav: newState

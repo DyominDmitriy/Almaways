@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta charset="UTF-8">
   <title>{{ 'Редактировать' if route else 'Добавить' }} маршрут</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
@@ -10,6 +11,7 @@
   <p><a href="{{ url_for('admin.routes_list') }}">← Вернуться к списку</a></p>
 
   <form method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Название:</label>
     <input type="text" name="title" value="{{ route.title if route else '' }}" required>
 

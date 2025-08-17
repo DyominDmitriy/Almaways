@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
  <head>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title data-i18n="">
@@ -292,6 +293,7 @@
  </body>
 </html>
 <script>
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
  // Загрузка начального состояния
   async function loadInitialState() {
       try {
@@ -323,7 +325,9 @@
           
           const response = await fetch('/update_route_state', {
               method: 'POST',
-              headers: {'Content-Type': 'application/json'},
+              headers: {'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken   // 🔑 добавляем токен
+              },
               body: JSON.stringify({
                   route_id: routeId,
                   new_state: newState

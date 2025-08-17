@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title data-i18n="_">{{ route.title }}</title>
@@ -69,6 +70,7 @@
 
   {# Скрипты прогресса — твои же, просто id подставляем динамически #}
   <script>
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
   async function loadInitialState() {
       try {
           const response = await fetch('/get_current_user_state');
@@ -93,7 +95,9 @@
           button.disabled = true;
           const response = await fetch('/update_route_state', {
               method: 'POST',
-              headers: {'Content-Type': 'application/json'},
+              headers: {'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken   // 🔑 добавляем токен
+              },
               body: JSON.stringify({ route_id: routeId, new_state: newState })
           });
           const result = await response.json();
@@ -140,7 +144,9 @@
           button.disabled = true;
           const response = await fetch('/update_route_state_fav', {
               method: 'POST',
-              headers: {'Content-Type': 'application/json'},
+              headers: {'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken   // 🔑 добавляем токен
+              },
               body: JSON.stringify({ route_id: routeId, new_state_fav: newState })
           });
           const result = await response.json();
