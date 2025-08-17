@@ -450,6 +450,15 @@ def cul_admin_delete(rid):
     db_sess.close()
     return jsonify({"success": True})
 
+
+
+@app.route('/cul_dynamic/<int:route_id>')
+def cul_dynamic_alias(route_id):
+    return cul_dynamic(route_id)   # переиспользуем основной хендлер /cul/<id>
+
+
+
+
 @app.route("/cul/admin/toggle_publish/<int:rid>", methods=["POST"])
 @login_required
 def cul_admin_toggle_publish(rid):

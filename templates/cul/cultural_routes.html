@@ -255,7 +255,7 @@
       {% for r in routes %}
         <article class="card" data-id="{{ r.id }}">
           <div style="position:relative">
-            <a href="/cul_dynamic/{{ r.id }}" class="cover-link" aria-label="Открыть {{ r.title or r.name }}">
+            <a href="{{ url_for('cul_dynamic', route_id=r.id) }}" class="cover-link" aria-label="Открыть {{ r.title or r.name }}">
               <img loading="lazy" src="{{ r.image_url or r.img or url_for('static', filename='img/placeholder.jpg') }}" alt="{{ r.title or r.name }}"/>
             </a>
             {% if current_user.is_authenticated and current_user.is_admin %}
@@ -279,7 +279,7 @@
               <p style="margin:8px 0 0;color:#64748b">{{ r.short_description }}</p>
             {% endif %}
             <div class="actions">
-              <a href="/cul_dynamic/{{ r.id }}" class="btn ghost">Открыть</a>
+              <a href="{{ url_for('cul_dynamic', route_id=r.id) }}" class="btn ghost">Открыть</a>
               <a href="/add_to_favourites/{{ r.id }}" class="btn" aria-label="Добавить в избранное"><i class="fa-regular fa-bookmark"></i></a>
             </div>
           </div>
