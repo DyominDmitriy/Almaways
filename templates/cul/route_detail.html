@@ -2,164 +2,246 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title data-i18n="_">{{ route.title }}</title>
-  <script src="/static/js/translate.js" defer></script>
-  <link rel="stylesheet" href="/static/css/cul_common.css"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{{ route.title or route.name }} — Almaways</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+
   <style>
-    header {
-      {% if route.image_url %}
-      background-image: url('{{ url_for('static', filename='uploads/' ~ route.image_url) }}');
-      {% else %}
-      background-image: url('../static/img/culture.jpg');
-      {% endif %}
-      background-size: cover;
-      background-position: center;
-      height: 300px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      text-decoration: none;
-      color:white;
+    :root{
+      --bg:#F9FBFF; --panel:#FFFFFF; --ink:#0B1220; --muted:#566179;
+      --primary:#B5CEF5; --secondary:#2E6D9C; --ring:#B5CEF5;
+      --r-s:12px; --r-m:16px; --r-l:22px; --pill:999px;
+      --s-s:0 6px 18px rgba(2,6,23,.06);
+      --s-m:0 14px 34px rgba(2,6,23,.10);
+      --s-l:0 24px 64px rgba(46,109,156,.22);
     }
-    .admin-edit-link{position:absolute;top:10px;right:10px;background:#fff;color:#333;padding:6px 10px;font-size:12px;border-radius:4px;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,.1);}
-    .admin-edit-link:hover{background:#f1f1f1;}
+    html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Poppins',system-ui,sans-serif;line-height:1.5;overflow-x:hidden}
+    img{display:block;max-width:100%;height:auto}
+    a{color:var(--secondary);text-decoration:none}
+    .container{max-width:1200px;margin:0 auto;padding:0 16px}
+
+    /* header/burger */
+    .header{position:sticky;top:0;z-index:50;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(2,6,23,.06)}
+    .brand{display:flex;align-items:center;gap:10px}.brand img{height:32px}.brand strong{color:var(--secondary)}
+    .burger-menu{width:28px;height:20px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer}
+    .burger-menu span{height:3px;background:var(--ink);border-radius:3px;transition:.25s}
+    .burger-menu.active span:nth-child(1){transform:translateY(8px) rotate(45deg)}
+    .burger-menu.active span:nth-child(2){opacity:0}
+    .burger-menu.active span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
+    .sidebar{position:fixed;inset:0 auto 0 0;width:320px;background:#fff;transform:translateX(-100%);transition:.3s;z-index:60;border-right:1px solid #e6eef8;box-shadow:var(--s-m);overflow:auto}
+    .sidebar.active{transform:translateX(0)}
+    .overlay{position:fixed;inset:0;background:rgba(11,18,32,.28);opacity:0;visibility:hidden;transition:.2s;z-index:55}
+    .overlay.active{opacity:1;visibility:visible}
+    .menu{display:flex;flex-direction:column;gap:6px;padding:8px 14px 18px}
+    .menu a{display:flex;align-items:center;gap:.7rem;padding:10px 12px;border-radius:12px;color:var(--ink);transition:.2s}
+    .menu a:hover{background:#f7faff}
+
+    .btn{display:inline-flex;align-items:center;gap:.6rem;border:0;border-radius:var(--pill);padding:.78rem 1.15rem;font-weight:800;color:#fff;background:linear-gradient(180deg,var(--secondary),var(--primary));box-shadow:0 12px 26px rgba(46,109,156,.25);transition:.18s}
+    .btn:hover{transform:translateY(-2px)}
+    .btn.ghost{background:#fff;color:var(--secondary);border:1px solid var(--primary);box-shadow:var(--s-s)}
+    .chip{display:inline-flex;align-items:center;gap:.35rem;border-radius:var(--pill);padding:.25rem .65rem;background:#EAF2FE;color:#2E6D9C;font-weight:700;font-size:.82rem}
+
+    .hero{margin:16px 0;border-radius:22px;overflow:hidden;background:radial-gradient(900px 280px at 10% -10%, rgba(181,206,245,.35), transparent),linear-gradient(180deg,#fff,#f7fbff);box-shadow:var(--s-m)}
+    .hero-inner{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;align-items:stretch}
+    @media(max-width:980px){.hero-inner{grid-template-columns:1fr}}
+    .hero-cover{position:relative}.hero-cover img{width:100%;height:100%;object-fit:cover;aspect-ratio:16/10}
+    .hero-info{padding:18px}
+    .hero-title{margin:0;font-family:'Playfair Display',serif;font-size:clamp(1.6rem,3.5vw,2.6rem)}
+    .hero-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+
+    .grid{display:grid;grid-template-columns:2fr 1fr;gap:22px;margin:18px 0}
+    @media(max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{background:#fff;border:1px solid #e6eef8;border-radius:18px;box-shadow:var(--s-s);padding:16px}
+    .sticky{position:sticky;top:86px}
+
+    .steps{display:grid;gap:12px}
+    .step{background:#fff;border:1px solid #e6eef8;border-radius:16px;padding:12px;box-shadow:var(--s-s)}
+
+    .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    @media(max-width:780px){.gallery{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:520px){.gallery{grid-template-columns:1fr}}
+    .mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    @media(max-width:1100px){.mini-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:640px){.mini-grid{grid-template-columns:1fr}}
+    .mini-card{background:#fff;border:1px solid #e6eef8;border-radius:16px;overflow:hidden;box-shadow:var(--s-s)}
+    .mini-card img{width:100%;aspect-ratio:16/10;object-fit:cover}
+    .mini-card .info{padding:12px}
   </style>
 </head>
 <body>
-  <header>
-    <button class="header-button" data-i18n="__">
-      <a class="a_but" data-i18n="__" href="#map">Маршрут на карте</a>
-    </button>
-    {% if current_user.is_authenticated and current_user.is_admin %}
-      <a class="admin-edit-link" href="{{ url_for('admin.edit_route', id=route.id) }}">Редактировать</a>
-    {% endif %}
-  </header>
+<header class="header">
+  <div class="burger-menu" id="burger-menu"><span></span><span></span><span></span></div>
+  <div class="brand">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo"/>
+    <strong>Almaways</strong>
+  </div>
+  <div class="hidden sm:flex items-center gap-2">
+    <a href="{{ url_for('index') }}" class="btn ghost" style="padding:.55rem 1rem">На главную</a>
+    <a href="{{ url_for('favourites') }}" class="btn" style="padding:.55rem 1rem">Избранное</a>
+  </div>
+</header>
 
-  <div class="container">
-    <a data-i18n="" href="javascript:history.back()" style="font-size: 28px;">←</a>
-    <h1 data-i18n="_">О маршруте</h1>
-    <p data-i18n="____________">{{ route.description }}</p>
+<aside class="sidebar" id="sidebar">
+  <nav class="menu">
+    <a href="{{ url_for('index') }}"><i class="fas fa-home"></i>Главная</a>
+    <a href="{{ url_for('cultural_routes') }}"><i class="fas fa-route"></i>Культурные маршруты</a>
+    <a href="{{ url_for('favourites') }}"><i class="fas fa-heart"></i>Избранное</a>
+    <a href="{{ url_for('user_office') }}"><i class="fas fa-user"></i>Личный кабинет</a>
+    <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i>Выход</a>
+  </nav>
+</aside>
+<div class="overlay" id="overlay"></div>
 
-    {# иконки можно позже сделать динамическими #}
-    <div class="icons">
-      <div data-i18n="_">☕ Еда</div>
-      <div data-i18n="_">🧶 Пешком</div>
-      <div data-i18n="_">📷 Фото</div>
+<main class="container" style="padding:18px 0 28px">
+
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-info">
+        <h1 class="hero-title">{{ route.title or route.name }}</h1>
+        <div class="hero-meta">
+          {% set dur = route.duration or route.duration_hours %}
+          {% if dur %}<span class="chip"><i class="fa-regular fa-clock"></i> {{ dur }} ч</span>{% endif %}
+          {% if route.length_km is not none or route.length is not none %}
+            <span class="chip"><i class="fa-solid fa-person-hiking"></i> {{ route.length_km or route.length }} км</span>
+          {% endif %}
+          {% if route.category %}<span class="chip">#{{ route.category }}</span>{% endif %}
+          <span class="chip"><i class="fa-regular fa-star"></i> {{ (route.rating or route.popularity or 0)|round(1) }}</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+          <button id="btn-completed" class="btn"><i class="fa-solid fa-check"></i> Завершил</button>
+          <button id="btn-fav" class="btn ghost"><i class="fa-regular fa-bookmark"></i> В избранное</button>
+          {% if route.map_embed %}<a class="btn ghost" href="#map"><i class="fa-regular fa-map"></i> Карта</a>{% endif %}
+          <button id="btn-share" class="btn ghost"><i class="fa-solid fa-share-nodes"></i> Поделиться</button>
+        </div>
+      </div>
+      <div class="hero-cover">
+        <img src="{{ route.image_url or route.img or url_for('static', filename='img/placeholder.jpg') }}"
+             alt="{{ route.title or route.name }}"
+             onerror="this.src='{{ url_for('static', filename='img/placeholder.jpg') }}'">
+        {% if current_user.is_authenticated and current_user.is_admin %}
+          <div style="position:absolute;right:12px;bottom:12px;display:flex;gap:6px">
+            <a class="btn ghost" href="#" id="adm-pub"><i class="fa-solid fa-toggle-on"></i></a>
+            <a class="btn ghost" href="#" id="adm-del"><i class="fa-regular fa-trash-can"></i></a>
+          </div>
+        {% endif %}
+      </div>
     </div>
+  </section>
 
-    {# Пока не подключали точки маршрута (points). Можем позже. #}
+  <section class="grid">
+    <article class="card">
+      <h2 style="margin:0 0 10px">Описание</h2>
+      {% if route.short_description %}<p style="color:#566179">{{ route.short_description }}</p>{% endif %}
+      {% if route.description %}<div class="route-html">{{ route.description|safe }}</div>{% endif %}
 
-    <button class="route-done-btn" data-i18n="@" id="cul_{{ route.id }}">
-      ✔ Маршрут пройден
-    </button>
-    <button class="route-fav-btn" data-i18n="" id="cul_{{ route.id }}_fav">
-      Понравился
-    </button>
-  </div>
+      {% if route.itinerary or route.points %}
+        <h3 style="margin:16px 0 8px">Маршрут по шагам</h3>
+        <div class="steps">
+          {% for s in (route.itinerary or route.points or []) %}
+            <div class="step">
+              <strong>{{ loop.index }}.</strong> {{ s.title or s.name or s[0] }}
+              {% if s.desc or s[1] %}<div style="color:#64748b;margin-top:4px">{{ s.desc or s[1] }}</div>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
 
-  <div class="map" id="map">
-    {% if route.map_embed %}
-      {{ route.map_embed|safe }}
-    {% else %}
-      <p>Карта пока не загружена.</p>
+      {% if route.gallery %}
+        <h3 style="margin:16px 0 8px">Галерея</h3>
+        <div class="gallery">
+          {% for g in route.gallery %}<img src="{{ g }}" alt="Фото {{ loop.index }}" loading="lazy">{% endfor %}
+        </div>
+      {% endif %}
+    </article>
+
+    <aside class="card sticky">
+      <h3 style="margin:0 0 10px">Сводка</h3>
+      <div class="steps">
+        <div class="step"><div style="font-weight:800;color:#0b3b59">Сложность</div><div>{{ route.difficulty or '—' }}</div></div>
+        <div class="step"><div style="font-weight:800;color:#0b3b59">Длительность</div><div>{{ dur ~ ' ч' if dur else '—' }}</div></div>
+        <div class="step"><div style="font-weight:800;color:#0b3b59">Длина</div><div>{{ (route.length_km or route.length) ~ ' км' if (route.length_km is not none or route.length is not none) else '—' }}</div></div>
+        <div class="step"><div style="font-weight:800;color:#0b3b59">Рейтинг</div><div>{{ (route.rating or route.popularity or 0)|round(1) }}</div></div>
+      </div>
+
+      {% if route.map_embed %}
+        <h3 id="map" style="margin:16px 0 8px">Карта</h3>
+        <div style="border:1px solid #e6eef8;border-radius:16px;overflow:hidden;box-shadow:var(--s-s)">{{ route.map_embed|safe }}</div>
+      {% endif %}
+    </aside>
+  </section>
+
+  <section class="card" style="margin-top:12px">
+    <h3 style="margin:0 0 10px">Похожие</h3>
+    <div id="similar" class="mini-grid"></div>
+  </section>
+</main>
+
+<script>
+  // burger/sidebar
+  (function(){
+    const b=document.getElementById('burger-menu'), s=document.getElementById('sidebar'), o=document.getElementById('overlay');
+    function t(){b.classList.toggle('active');s.classList.toggle('active');o.classList.toggle('active');document.body.style.overflow=s.classList.contains('active')?'hidden':''}
+    b?.addEventListener('click',t); o?.addEventListener('click',t);
+  })();
+
+  (function(){
+    const rid = {{ route.id|int }};
+    const favKey = 'cul_' + rid + '_fav';
+
+    const bDone = document.getElementById('btn-completed');
+    const bFav  = document.getElementById('btn-fav');
+    const bShare= document.getElementById('btn-share');
+
+    function setDone(on){ bDone.classList.toggle('ghost', !on); bDone.innerHTML = on? '<i class="fa-solid fa-check"></i> Завершено' : '<i class="fa-solid fa-check"></i> Завершил'; }
+    function setFav(on){  bFav.classList.toggle('ghost', !on);  bFav.innerHTML  = on? '<i class="fa-solid fa-bookmark"></i> В избранном' : '<i class="fa-regular fa-bookmark"></i> В избранное'; }
+
+    fetch('{{ url_for("get_current_user_state") }}',{credentials:'include'}).then(r=>r.json()).then(s=>{
+      const done = s && s.completed_routes && s.completed_routes['route_'+rid]; setDone(!!done);
+    });
+    fetch('{{ url_for("get_current_user_state_fav") }}',{credentials:'include'}).then(r=>r.json()).then(s=>{
+      const fav = s && s.favourite_routes && s.favourite_routes[favKey]; setFav(!!fav);
+    });
+
+    bDone?.addEventListener('click', async ()=>{
+      const nowOn = bDone.classList.contains('ghost');
+      const res = await fetch('{{ url_for("update_route_state") }}',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({route_id:rid,new_state:nowOn})});
+      const d = await res.json(); if(res.ok && d.status==='success') setDone(nowOn); else alert('Не удалось сохранить');
+    });
+    bFav?.addEventListener('click', async ()=>{
+      const nowOn = bFav.classList.contains('ghost');
+      const res = await fetch('{{ url_for("update_route_state_fav") }}',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({route_id:favKey,new_state_fav:nowOn})});
+      const d = await res.json(); if(res.ok && d.status==='success') setFav(nowOn); else alert('Не удалось сохранить');
+    });
+    bShare?.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(location.href); bShare.textContent='Ссылка скопирована'; setTimeout(()=>bShare.innerHTML='<i class="fa-solid fa-share-nodes"></i> Поделиться',1400);}catch(_){} });
+
+    // похожие
+    fetch('{{ url_for("api_popular_routes") }}',{credentials:'include'}).then(r=>r.json()).then(list=>{
+      const box=document.getElementById('similar'); if(!box) return;
+      let html=''; (list||[]).slice(0,6).forEach(it=>{
+        const img = it.image_url || '{{ url_for("static", filename="img/placeholder.jpg") }}';
+        const title = it.title || 'Маршрут';
+        html += `<article class="mini-card">
+          <a href="/cul/${it.id}"><img src="${img}" alt="${title}"></a>
+          <div class="info"><h4 style="margin:0 0 6px">${title}</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;color:#64748b"><span>★ ${it.popularity ?? 0}</span></div>
+            <div style="margin-top:8px"><a class="btn ghost" href="/cul/${it.id}">Открыть</a></div>
+          </div>
+        </article>`;
+      });
+      box.innerHTML = html;
+    });
+
+    // админ действия
+    {% if current_user.is_authenticated and current_user.is_admin %}
+    function post(u){return fetch(u,{method:'POST',credentials:'include'}).then(r=>r.json().catch(()=>({})).then(d=>({ok:r.ok,data:d})))}
+    document.getElementById('adm-pub')?.addEventListener('click', async (e)=>{e.preventDefault(); const x=await post('{{ url_for("cul_admin_toggle_publish", rid=route.id) }}'); alert(x.ok&&x.data.success?'Статус публикации переключён':'Ошибка');});
+    document.getElementById('adm-del')?.addEventListener('click', async (e)=>{e.preventDefault(); if(!confirm('Удалить маршрут?')) return; const x=await post('{{ url_for("cul_admin_delete", rid=route.id) }}'); if(x.ok&&x.data.success) location.href='{{ url_for("cultural_routes") }}'; else alert('Ошибка');});
     {% endif %}
-  </div>
-
-  {# Скрипты прогресса — твои же, просто id подставляем динамически #}
-  <script>
-  async function loadInitialState() {
-      try {
-          const response = await fetch('/get_current_user_state');
-          const data = await response.json();
-          if (data.completed_routes) {
-              Object.entries(data.completed_routes).forEach(([routeId, isCompleted]) => {
-                  const button = document.getElementById(routeId);
-                  if (button) {
-                      button.textContent = isCompleted ? 'Спасибо!' : '✔ Маршрут пройден';
-                      button.classList.toggle('done', isCompleted);
-                  }
-              });
-          }
-      } catch (error) { console.error("Ошибка загрузки состояния:", error); }
-  }
-
-  async function handleRouteClick(button) {
-      const routeId = button.id;
-      const isCurrentlyCompleted = button.classList.contains('done');
-      const newState = !isCurrentlyCompleted;
-      try {
-          button.disabled = true;
-          const response = await fetch('/update_route_state', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({ route_id: routeId, new_state: newState })
-          });
-          const result = await response.json();
-          if (result.status === "success") {
-              button.textContent = newState ? 'Спасибо!' : '✔ Маршрут пройден';
-              button.classList.toggle('done', newState);
-          }
-      } catch (error) {
-          console.error("Ошибка обновления:", error);
-          button.textContent = isCurrentlyCompleted ? 'Спасибо!' : '✔ Маршрут пройден';
-          button.classList.toggle('done', isCurrentlyCompleted);
-      } finally { button.disabled = false; }
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-      loadInitialState();
-      document.querySelectorAll('.route-done-btn').forEach(btn => {
-          btn.onclick = () => handleRouteClick(btn);
-      });
-  });
-  </script>
-
-  <script>
-  async function loadInitialStateFav() {
-      try {
-          const response = await fetch('/get_current_user_state_fav');
-          const data = await response.json();
-          if (data.favourite_routes) {
-              Object.entries(data.favourite_routes).forEach(([routeId, isFavourite]) => {
-                  const button = document.getElementById(routeId);
-                  if (button) {
-                      button.textContent = isFavourite ? 'в избранном ' : 'Понравился ';
-                      button.classList.toggle('done', isFavourite);
-                  }
-              });
-          }
-      } catch (error) { console.error("Ошибка загрузки состояния:", error); }
-  }
-  async function handleRouteClickFav(button) {
-      const routeId = button.id;
-      const isCurrentlyFavourite = button.classList.contains('done');
-      const newState = !isCurrentlyFavourite;
-      try {
-          button.disabled = true;
-          const response = await fetch('/update_route_state_fav', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({ route_id: routeId, new_state_fav: newState })
-          });
-          const result = await response.json();
-          if (result.status === "success") {
-              button.textContent = newState ? 'в Избраном' : 'Понравился ';
-              button.classList.toggle('done', newState);
-          }
-      } catch (error) {
-          console.error("Ошибка обновления:", error);
-          button.textContent = isCurrentlyFavourite ? 'в Избраном' : 'Понравился ';
-          button.classList.toggle('done', isCurrentlyFavourite);
-      } finally { button.disabled = false; }
-  }
-  document.addEventListener('DOMContentLoaded', () => {
-      loadInitialStateFav();
-      document.querySelectorAll('.route-fav-btn').forEach(btn => {
-          btn.onclick = () => handleRouteClickFav(btn);
-      });
-  });
-  </script>
+  })();
+</script>
 </body>
 </html>

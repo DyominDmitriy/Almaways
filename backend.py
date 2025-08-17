@@ -538,16 +538,21 @@ def index():
 @app.route("/api/popular_routes")
 @login_required
 def api_popular_routes():
-    popular = _popular_routes(limit=12)
-    data = [
-        {
-            "id": getattr(r, "id", None),
-            "title": getattr(r, "title", None) or getattr(r, "name", "Маршрут"),
-            "image_url": _route_image(r),
-            "popularity": getattr(r, "popularity", None) or getattr(r, "rating", 0),
-        } for r in popular
-    ]
-    return jsonify(data)
+    db_sess = db_session.create_session()
+    try:
+        popular = _popular_routes(db_sess, limit=12)  # <= передаём сессию!
+        data = []
+        for r in popular:
+            data.append({
+                "id": getattr(r, "id", None),
+                "title": getattr(r, "title", None) or getattr(r, "name", "Маршрут"),
+                "image_url": _route_image(r),
+                "popularity": getattr(r, "popularity", None) or getattr(r, "rating", 0),
+            })
+        return jsonify(data)
+    finally:
+        db_sess.close()
+
 
 
 
