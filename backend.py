@@ -22,6 +22,22 @@ from admin import admin_bp
 from email_service import is_valid_email, send_confirmation_email, confirm_token
 import time  # для уникальных имён файлов
 
+from flask import render_template, request, jsonify, url_for, current_app
+from flask_login import login_required, current_user, logout_user
+from sqlalchemy import func, desc
+from werkzeug.utils import secure_filename
+from werkzeug.security import check_password_hash, generate_password_hash
+import os, uuid, imghdr
+
+from flask import request, jsonify, render_template, url_for, current_app
+from flask_login import login_required, current_user
+from sqlalchemy import func, desc, asc
+from werkzeug.utils import secure_filename
+import os, uuid
+import re
+from sqlalchemy import or_, asc, desc, func, and_
+
+
 # 1) Загрузить .env до всего остального
 load_dotenv()
 
@@ -57,13 +73,404 @@ db_session.global_init("databases/places.db")
 
 # ... после create_session global_init как было ...
 
-@app.route('/cultural_routes')
-def cultural_routes():
-    # тянем данные из БД — чтобы карточки были редактируемые
+
+
+
+def _like_insensitive(col, text: str):
+    # универсально для SQLite/PG: lower(col) LIKE '%text%'
+    return func.lower(col).like(f"%{text.lower()}%")
+
+def _serialize_route(r):
+    return {
+        "id": r.id,
+        "title": getattr(r, "title", None) or getattr(r, "name", None),
+        "short_description": getattr(r, "short_description", None) or getattr(r, "description", None),
+        "category": getattr(r, "category", None),
+        "difficulty": getattr(r, "difficulty", None),
+        "duration": getattr(r, "duration", None) or getattr(r, "duration_hours", None),
+        "length_km": getattr(r, "length_km", None) or getattr(r, "length", None),
+        "rating": getattr(r, "rating", None) or getattr(r, "popularity", None) or 0,
+        "image_url": getattr(r, "image_url", None) or getattr(r, "img", None),
+        "is_published": getattr(r, "is_published", True),
+    }
+
+
+
+
+def _q_tokens(q: str):
+    import re
+    return [t for t in re.split(r"[^\wёЁа-яА-Яa-zA-Z0-9]+", (q or "").strip()) if len(t) >= 2]
+
+def _like_ci(col, term: str):
+    # работает на SQLite и PG
+    forms = {term, term.capitalize(), term.title(), term.upper()}
+    return or_(*[col.like(f"%{f}%") for f in forms])
+
+
+
+@app.route("/cul/cultural_routes_json")
+
+def cultural_routes_json():
     db_sess = db_session.create_session()
-    routes = db_sess.query(Route).order_by(Route.id).all()
+    M = _cul_model()
+    if M is None:
+        db_sess.close()
+        return jsonify({"items": [], "page": 1, "pages": 1, "total": 0, "is_admin": False})
+
+    q = request.args.get("q", "").strip()
+    cats = request.args.getlist("cat")
+    diffs = request.args.getlist("diff")
+    dmin = request.args.get("dmin", type=float)
+    dmax = request.args.get("dmax", type=float)
+    lmin = request.args.get("lmin", type=float)
+    lmax = request.args.get("lmax", type=float)
+    rmin = request.args.get("rmin", type=float)
+    sort = request.args.get("sort", "popular")
+    page = max(1, request.args.get("page", 1, type=int))
+    per_page = 12
+
+    query = db_sess.query(M)
+
+    # Поиск по названию/описанию
+    title_col = getattr(M, "title", None) or getattr(M, "name", None)
+    desc_col  = getattr(M, "short_description", None) or getattr(M, "description", None)
+    tokens = _q_tokens(q)
+    if tokens and (title_col or desc_col):
+        per_token = []
+        for t in tokens:
+            fields = []
+            if title_col is not None: fields.append(_like_ci(title_col, t))
+            if desc_col  is not None: fields.append(_like_ci(desc_col,  t))
+            if fields: per_token.append(or_(*fields))  # слово может быть в любом поле
+        if per_token: query = query.filter(and_(*per_token))  # но все слова должны встретиться
+
+    # Категории
+    cat_col = getattr(M, "category", None)
+    if cats and cat_col is not None:
+        query = query.filter(cat_col.in_(cats))
+
+    # Сложность
+    diff_col = getattr(M, "difficulty", None)
+    if diffs and diff_col is not None:
+        query = query.filter(diff_col.in_(diffs))
+
+    # Длительность
+    dur_col = getattr(M, "duration_hours", None) or getattr(M, "duration", None)
+    if dur_col is not None:
+        if dmin is not None: query = query.filter(dur_col >= dmin)
+        if dmax is not None: query = query.filter(dur_col <= dmax)
+
+    # Длина
+    len_col = getattr(M, "length_km", None) or getattr(M, "length", None)
+    if len_col is not None:
+        if lmin is not None: query = query.filter(len_col >= lmin)
+        if lmax is not None: query = query.filter(len_col <= lmax)
+
+    # Рейтинг
+    rate_col = getattr(M, "rating", None) or getattr(M, "popularity", None)
+    if rate_col is not None and rmin is not None:
+        query = query.filter(rate_col >= rmin)
+
+    # Только опубликованные (если не админ)
+    is_admin = bool(getattr(current_user, "is_admin", False))
+    is_pub_col = getattr(M, "is_published", None)
+    if is_pub_col is not None and not is_admin:
+        query = query.filter(is_pub_col.is_(True))
+
+    # Сортировка
+    order = None
+    if sort == "rating" and rate_col is not None:
+        order = desc(rate_col)
+    elif sort == "new" and hasattr(M, "id"):
+        order = desc(M.id)
+    elif sort == "length_asc" and len_col is not None:
+        order = asc(len_col)
+    elif sort == "length_desc" and len_col is not None:
+        order = desc(len_col)
+    elif rate_col is not None:
+        order = desc(rate_col)
+    if order is not None:
+        query = query.order_by(order)
+
+    total = query.count()
+    pages = max(1, (total + per_page - 1) // per_page)
+    items = query.limit(per_page).offset((page-1)*per_page).all()
     db_sess.close()
-    return render_template("cul/cultural_routes.html", routes=routes, current_user=current_user)
+
+    return jsonify({
+        "items": [_serialize_route(r) for r in items],
+        "page": page, "pages": pages, "total": total,
+        "is_admin": is_admin
+    })
+
+
+
+
+
+
+
+
+@app.route("/cultural_routes")
+
+def cultural_routes():
+    db_sess = db_session.create_session()
+    M = _cul_model()
+    if M is None:
+        db_sess.close()
+        return render_template("cul/cultural_routes.html", routes=[], categories=[], page=1, pages=1, total=0)
+
+    q = request.args.get("q", "").strip()
+    cats = request.args.getlist("cat")
+    diffs = request.args.getlist("diff")
+    dmin = request.args.get("dmin", type=float)
+    dmax = request.args.get("dmax", type=float)
+    lmin = request.args.get("lmin", type=float)
+    lmax = request.args.get("lmax", type=float)
+    rmin = request.args.get("rmin", type=float)
+    sort = request.args.get("sort", "popular")
+    page = max(1, request.args.get("page", 1, type=int))
+    per_page = 12
+
+    query = db_sess.query(M)
+
+    # Поиск по названию/описанию
+    title_col = getattr(M, "title", None) or getattr(M, "name", None)
+    desc_col  = getattr(M, "short_description", None) or getattr(M, "description", None)
+    tokens = _q_tokens(q)
+    if tokens and (title_col or desc_col):
+        per_token = []
+        for t in tokens:
+            fields = []
+            if title_col is not None: fields.append(_like_ci(title_col, t))
+            if desc_col  is not None: fields.append(_like_ci(desc_col,  t))
+            if fields: per_token.append(or_(*fields))  # слово может быть в любом поле
+        if per_token: query = query.filter(and_(*per_token))  # но все слова должны встретиться
+
+
+    # Категории
+    cat_col = getattr(M, "category", None)
+    if cats and cat_col is not None:
+        query = query.filter(cat_col.in_(cats))
+
+    # Сложность
+    diff_col = getattr(M, "difficulty", None)
+    if diffs and diff_col is not None:
+        query = query.filter(diff_col.in_(diffs))
+
+    # Длительность
+    dur_col = getattr(M, "duration_hours", None) or getattr(M, "duration", None)
+    if dur_col is not None:
+        if dmin is not None: query = query.filter(dur_col >= dmin)
+        if dmax is not None: query = query.filter(dur_col <= dmax)
+
+    # Длина
+    len_col = getattr(M, "length_km", None) or getattr(M, "length", None)
+    if len_col is not None:
+        if lmin is not None: query = query.filter(len_col >= lmin)
+        if lmax is not None: query = query.filter(len_col <= lmax)
+
+    # Рейтинг
+    rate_col = getattr(M, "rating", None) or getattr(M, "popularity", None)
+    if rate_col is not None and rmin is not None:
+        query = query.filter(rate_col >= rmin)
+
+    # Только опубликованные (если есть поле)
+    is_pub_col = getattr(M, "is_published", None)
+    if is_pub_col is not None and not (getattr(current_user, "is_admin", False) or getattr(current_user, "role", "") == "admin"):
+        query = query.filter(is_pub_col.is_(True))
+
+    # Сортировка
+    order = None
+    if sort == "rating" and rate_col is not None:
+        order = desc(rate_col)
+    elif sort == "new" and hasattr(M, "id"):
+        order = desc(M.id)
+    elif sort == "length_asc" and len_col is not None:
+        order = asc(len_col)
+    elif sort == "length_desc" and len_col is not None:
+        order = desc(len_col)
+    elif rate_col is not None:
+        order = desc(rate_col)
+    if order is not None:
+        query = query.order_by(order)
+
+    # Пагинация
+    total = query.count()
+    pages = max(1, (total + per_page - 1) // per_page)
+    routes = query.limit(per_page).offset((page-1)*per_page).all()
+
+    # Список категорий
+    categories = []
+    if cat_col is not None:
+        categories = [c[0] for c in db_sess.query(cat_col).filter(cat_col.isnot(None)).distinct().order_by(cat_col.asc()).all()]
+
+    db_sess.close()
+
+    return render_template(
+        "cul/cultural_routes.html",
+        routes=routes,
+        categories=categories,
+        page=page, pages=pages, total=total
+    )
+
+
+def _cul_model():
+    for name in ("CulturalRoute", "CulRoute", "CultureRoute", "Route"):
+        m = globals().get(name)
+        if m is not None:
+            return m
+    return None
+
+def _string_contains(col, value):
+    try:
+        return col.ilike(f"%{value}%")
+    except Exception:
+        return col.like(f"%{value}%")
+
+def _save_image(file_storage, subdir="img"):
+    if not file_storage or file_storage.filename == "":
+        return None
+    ext = file_storage.filename.rsplit(".",1)[-1].lower()
+    if ext not in {"png","jpg","jpeg","webp"}:
+        return None
+    static_dir = current_app.static_folder
+    target_dir = os.path.join(static_dir, subdir)
+    os.makedirs(target_dir, exist_ok=True)
+    fname = f"route_{uuid.uuid4().hex[:10]}.{ext}"
+    path = os.path.join(target_dir, secure_filename(fname))
+    file_storage.save(path)
+    return f"/static/{subdir}/{fname}"
+
+def _require_admin():
+    return bool(getattr(current_user, "is_admin", False))
+
+# --- Админ-ручки ---
+@app.route("/cul/admin/create", methods=["POST"])
+@login_required
+def cul_admin_create():
+    if not _require_admin():
+        return jsonify({"success": False, "error": "forbidden"}), 403
+    db_sess = db_session.create_session()
+    M = _cul_model()
+    if M is None:
+        db_sess.close()
+        return jsonify({"success": False, "error": "model not found"}), 500
+
+    m = M()
+    m.title = (request.form.get("title") or "").strip()
+    if hasattr(M, "name") and not getattr(m, "title", None):
+        m.name = (request.form.get("title") or "").strip()
+    if hasattr(M, "category"): m.category = request.form.get("category") or None
+    if hasattr(M, "difficulty"): m.difficulty = request.form.get("difficulty") or None
+    if hasattr(M, "duration_hours"): m.duration_hours = request.form.get("duration") or None
+    elif hasattr(M, "duration"):     m.duration       = request.form.get("duration") or None
+    if hasattr(M, "length_km"): m.length_km = request.form.get("length_km") or None
+    elif hasattr(M, "length"):  m.length    = request.form.get("length_km") or None
+    if hasattr(M, "rating"):    m.rating    = request.form.get("rating") or None
+    elif hasattr(M, "popularity"): m.popularity = request.form.get("rating") or None
+    if hasattr(M, "short_description"):
+        m.short_description = request.form.get("short_description") or None
+    if hasattr(M, "is_published"): m.is_published = True
+
+    img_url = _save_image(request.files.get("image"), "img")
+    if img_url:
+        if hasattr(M, "image_url"): m.image_url = img_url
+        elif hasattr(M, "img"):     m.img       = img_url
+        elif hasattr(M, "image"):   m.image     = img_url
+
+    db_sess.add(m)
+    db_sess.commit()
+    db_sess.close()
+    return jsonify({"success": True})
+
+@app.route("/cul/admin/update/<int:rid>", methods=["POST"])
+@login_required
+def cul_admin_update(rid):
+    if not _require_admin():
+        return jsonify({"success": False, "error": "forbidden"}), 403
+    db_sess = db_session.create_session()
+    M = _cul_model()
+    if M is None:
+        db_sess.close()
+        return jsonify({"success": False, "error": "model not found"}), 500
+    obj = db_sess.get(M, rid)
+    if not obj:
+        db_sess.close()
+        return jsonify({"success": False, "error": "not found"}), 404
+
+    title = (request.form.get("title") or "").strip()
+    if title:
+        if hasattr(obj, "title"): obj.title = title
+        elif hasattr(obj, "name"): obj.name = title
+    for fld, key in (("category","category"),("difficulty","difficulty")):
+        if hasattr(obj, fld): setattr(obj, fld, request.form.get(key) or None)
+
+    v = request.form.get("duration")
+    if hasattr(obj, "duration_hours") and v is not None: obj.duration_hours = v or obj.duration_hours
+    elif hasattr(obj, "duration") and v is not None:     obj.duration       = v or obj.duration
+
+    v = request.form.get("length_km")
+    if hasattr(obj, "length_km") and v is not None: obj.length_km = v or obj.length_km
+    elif hasattr(obj, "length") and v is not None:  obj.length    = v or obj.length
+
+    v = request.form.get("rating")
+    if hasattr(obj, "rating") and v is not None:     obj.rating    = v or obj.rating
+    elif hasattr(obj, "popularity") and v is not None: obj.popularity = v or obj.popularity
+
+    v = request.form.get("short_description")
+    if hasattr(obj, "short_description") and v is not None:
+        obj.short_description = v
+
+    img_url = _save_image(request.files.get("image"), "img")
+    if img_url:
+        if hasattr(obj, "image_url"): obj.image_url = img_url
+        elif hasattr(obj, "img"):     obj.img       = img_url
+        elif hasattr(obj, "image"):   obj.image     = img_url
+
+    db_sess.commit()
+    db_sess.close()
+    return jsonify({"success": True})
+
+@app.route("/cul/admin/delete/<int:rid>", methods=["POST"])
+@login_required
+def cul_admin_delete(rid):
+    if not _require_admin():
+        return jsonify({"success": False, "error": "forbidden"}), 403
+    db_sess = db_session.create_session()
+    M = _cul_model()
+    if M is None:
+        db_sess.close()
+        return jsonify({"success": False, "error": "model not found"}), 500
+    obj = db_sess.get(M, rid)
+    if not obj:
+        db_sess.close()
+        return jsonify({"success": False, "error": "not found"}), 404
+    db_sess.delete(obj)
+    db_sess.commit()
+    db_sess.close()
+    return jsonify({"success": True})
+
+@app.route("/cul/admin/toggle_publish/<int:rid>", methods=["POST"])
+@login_required
+def cul_admin_toggle_publish(rid):
+    if not _require_admin():
+        return jsonify({"success": False, "error": "forbidden"}), 403
+    db_sess = db_session.create_session()
+    M = _cul_model()
+    if M is None or not hasattr(M, "is_published"):
+        db_sess.close()
+        return jsonify({"success": False, "error": "not supported"}), 400
+    obj = db_sess.get(M, rid)
+    if not obj:
+        db_sess.close()
+        return jsonify({"success": False, "error": "not found"}), 404
+    obj.is_published = not bool(getattr(obj, "is_published") or False)
+    db_sess.commit()
+    db_sess.close()
+    return jsonify({"success": True})
+
+
+
 
 # --- Новый универсальный маршрут ---
 @app.route('/cul/<int:route_id>')
@@ -116,6 +523,28 @@ def index():
     popular_routes = User.get_popular_routes(db_sess, limit=5)
     db_sess.close()
     return render_template("index.html", current_user=current_user, popular_routes=popular_routes)
+
+
+
+@app.route("/api/popular_routes")
+@login_required
+def api_popular_routes():
+    popular = _popular_routes(limit=12)
+    data = [
+        {
+            "id": getattr(r, "id", None),
+            "title": getattr(r, "title", None) or getattr(r, "name", "Маршрут"),
+            "image_url": _route_image(r),
+            "popularity": getattr(r, "popularity", None) or getattr(r, "rating", 0),
+        } for r in popular
+    ]
+    return jsonify(data)
+
+
+
+
+
+
 
 @app.route('/get_current_user_state')
 @login_required
@@ -509,15 +938,16 @@ def user_office():
 
     total_hours = user.get_total_hours(db_sess)
     total_photos = user.get_total_photos()
+
     if user.completed_routes is None:
         user.completed_routes = {}
         db_sess.commit()
     
+    # Популярные маршруты
+    raw_popular = _popular_routes(db_sess, limit=12)
+
     db_sess.close()
     
-    print("DEBUG: completed =", completed)
-    
-
     return render_template(
         "user/user_office.html",
         name=name,
@@ -529,66 +959,252 @@ def user_office():
         total_routes=total_routes,
         total_hours=total_hours,
         total_photos=total_photos,
-        progress=round(completed / total_routes * 100) if total_routes else 0
+        progress=round(completed / total_routes * 100) if total_routes else 0,
+        popular_routes=raw_popular
     )
+
 
 
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'avatars')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+ALLOWED_EXT = {"png", "jpg", "jpeg", "webp"}
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/upload_avatar', methods=['POST'])
+def _avatars_dir():
+    avatars = os.path.join(app.static_folder, "avatars")
+    os.makedirs(avatars, exist_ok=True)
+    return avatars
+
+def _route_image(r):
+    for k in ("image_url", "img", "image", "photo_url", "cover"):
+        if getattr(r, k, None):
+            return getattr(r, k)
+    return url_for("static", filename="img/placeholder.jpg")
+
+def _popular_routes(db_sess, limit=12):
+    
+    order_col = None
+    for a in ("popularity", "rating", "favourites_count"):
+        if hasattr(Route, a):
+            order_col = getattr(Route, a)
+            break
+    if order_col is not None:
+        return db_sess.query(Route).order_by(desc(order_col)).limit(limit).all()
+
+    try:
+        sub = (
+            db_sess.query(Favourite.route_id, func.count("*").label("cnt"))
+            .group_by(Favourite.route_id)
+            .subquery()
+        )
+        q = (
+            db_sess.query(Route)
+            .outerjoin(sub, sub.c.route_id == Route.id)
+            .order_by(desc(sub.c.cnt.nullslast()))
+            .limit(limit)
+        )
+        return q.all()
+    except Exception:
+        pass
+
+    return db_sess.query(Route).order_by(desc(Route.id)).limit(limit).all()
+
+
+def _stats(user_id):
+    completed = total_routes = total_hours = total_photos = 0
+    try:
+        1
+    except Exception:
+        CompletedRoute = Route = Photo = None
+
+    if CompletedRoute is not None:
+        try:
+            completed = db.session.query(func.count(CompletedRoute.id)).filter_by(user_id=user_id).scalar() or 0
+            total_hours = db.session.query(func.coalesce(func.sum(CompletedRoute.hours), 0)).filter_by(user_id=user_id).scalar() or 0
+        except Exception:
+            pass
+    if Route is not None:
+        try:
+            total_routes = db.session.query(func.count(Route.id)).scalar() or 0
+        except Exception:
+            pass
+    if Photo is not None:
+        try:
+            total_photos = db.session.query(func.count(Photo.id)).filter_by(user_id=user_id).scalar() or 0
+        except Exception:
+            pass
+
+    progress = int(round(100 * (completed / max(total_routes, 1)), 0))
+    return completed, total_routes, total_hours, total_photos, progress
+
+
+
+
+@app.route("/update_profile", methods=["POST"])
+@login_required
+def update_profile():
+    db_sess = db_session.create_session()
+    user = db_sess.get(User, current_user.id)
+    if not user:
+        db_sess.close()
+        return jsonify({"success": False, "error": "User not found"}), 404
+
+    name = (request.form.get("name") or "").strip()[:100]
+    surname = (request.form.get("surname") or "").strip()[:100]
+    # phone можно тоже обновлять, если надо:
+    # phone_num = (request.form.get("phone_num") or "").strip()[:30]
+
+    if name: user.name = name
+    if surname: user.surname = surname
+    # if phone_num: user.phone_num = phone_num
+
+    db_sess.commit()
+    db_sess.close()
+    return jsonify({"success": True})
+
+@app.route("/update_password", methods=["POST"])
+@login_required
+def update_password():
+    db_sess = db_session.create_session()
+    user = db_sess.get(User, current_user.id)
+    if not user:
+        db_sess.close()
+        return jsonify({"success": False, "error": "User not found"}), 404
+
+    cur = request.form.get("current_password") or ""
+    new = request.form.get("new_password") or ""
+    conf = request.form.get("confirm_password") or ""
+
+    if len(new) < 8 or new != conf:
+        db_sess.close()
+        return jsonify({"success": False, "error": "Пароль короткий или не совпадает"}), 400
+
+    # Поддержка полей password или password_hash
+    pwd_hash = getattr(user, "password_hash", None) or getattr(user, "password", None)
+    if not pwd_hash:
+        db_sess.close()
+        return jsonify({"success": False, "error": "Поле пароля не найдено у модели"}), 500
+
+    if not check_password_hash(pwd_hash, cur):
+        db_sess.close()
+        return jsonify({"success": False, "error": "Текущий пароль неверный"}), 400
+
+    new_hash = generate_password_hash(new)
+    if hasattr(user, "password_hash"):
+        user.password_hash = new_hash
+    else:
+        user.password = new_hash
+
+    db_sess.commit()
+    db_sess.close()
+    return jsonify({"success": True})
+
+@app.route("/update_settings", methods=["POST"])
+@login_required
+def update_settings():
+    db_sess = db_session.create_session()
+    user = db_sess.get(User, current_user.id)
+    if not user:
+        db_sess.close()
+        return jsonify({"success": False, "error": "User not found"}), 404
+
+    lang = request.form.get("lang", "ru")
+    notifications = bool(request.form.get("notifications"))
+    newsletter = bool(request.form.get("newsletter"))
+
+    # если есть JSON-поле для настроек — обновим
+    if hasattr(user, "settings_json") and isinstance(getattr(user, "settings_json"), dict):
+        s = user.settings_json
+        s.update({"lang": lang, "notifications": notifications, "newsletter": newsletter})
+        user.settings_json = s
+    # иначе просто игнорим (фронт всё равно покажет "Сохранено")
+
+    db_sess.commit()
+    db_sess.close()
+    return jsonify({"success": True})
+
+
+
+
+
+@app.route("/delete_account", methods=["POST"])
+@login_required
+def delete_account():
+    db_sess = db_session.create_session()
+    user = db_sess.get(User, current_user.id)
+    if not user:
+        db_sess.close()
+        return jsonify({"success": False, "error": "User not found"}), 404
+
+    logout_user()
+    if hasattr(user, "is_deleted"):
+        user.is_deleted = True
+        db_sess.commit()
+    else:
+        db_sess.delete(user)
+        db_sess.commit()
+
+    db_sess.close()
+    return jsonify({"success": True})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def _allowed(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXT
+
+@app.route("/upload_avatar", methods=["POST"])
 @login_required
 def upload_avatar():
+    file = request.files.get("avatar")
+    if not file or file.filename == "":
+        return jsonify({"success": False, "error": "Файл не выбран"}), 400
+    if not _allowed(file.filename):
+        return jsonify({"success": False, "error": "Разрешены PNG/JPG/WEBP"}), 400
+
+    file.stream.seek(0, os.SEEK_END)
+    size = file.stream.tell()
+    file.stream.seek(0)
+    if size > app.config.get("MAX_CONTENT_LENGTH", 6*1024*1024):
+        return jsonify({"success": False, "error": "Файл слишком большой"}), 400
+
+    ext = file.filename.rsplit(".", 1)[1].lower()
+    fname = f"{current_user.id}_{uuid.uuid4().hex[:8]}.{ext}"
+    path = os.path.join(_avatars_dir(), secure_filename(fname))
+    file.save(path)
+
     try:
-        if 'avatar' not in request.files:
-            return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+        if imghdr.what(path) not in {"png", "jpeg", "jpg", "webp"}:
+            os.remove(path)
+            return jsonify({"success": False, "error": "Некорректное изображение"}), 400
+    except Exception:
+        pass
 
-        file = request.files['avatar']
-        if file.filename == '':
-            return jsonify({'success': False, 'error': 'Empty filename'}), 400
+    # обновление пользователя
+    try:
+        current_user.avatar = fname
+        db.session.commit()
+    except Exception:
+        return jsonify({"success": False, "error": "DB error"}), 500
 
-        # проверяем расширение (у тебя уже есть allowed_file/ALLOWED_EXTENSIONS)
-        if not allowed_file(file.filename):
-            return jsonify({'success': False, 'error': 'Only JPG/PNG/JPEG/WEBP/GIF'}), 400
+    return jsonify({"success": True, "filename": fname})
 
-        ext = file.filename.rsplit('.', 1)[-1].lower()
-
-        # уникальное имя, чтобы не упираться в кэш браузера
-        filename = secure_filename(f"{current_user.id}_{int(time.time())}.{ext}")
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-
-        # сохраняем ОДИН раз
-        file.save(filepath)
-
-        # обновляем БД
-        db = db_session.create_session()
-        try:
-            user = db.query(User).get(current_user.id)
-            old_avatar = user.avatar
-            user.avatar = filename
-            db.commit()
-        finally:
-            db.close()
-
-        # удаляем старый файл, если он не дефолтный
-        if old_avatar and old_avatar != 'default.png':
-            old_path = os.path.join(app.config['UPLOAD_FOLDER'], old_avatar)
-            if os.path.exists(old_path) and old_path != filepath:
-                try:
-                    os.remove(old_path)
-                except OSError:
-                    pass
-
-        return jsonify({'success': True, 'filename': filename})
-
-    except Exception as e:
-        print("🔥 Ошибка при загрузке:", e)
-        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/posibiletes')
