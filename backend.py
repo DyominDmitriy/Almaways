@@ -3,7 +3,7 @@ import datetime
 import secrets
 from dotenv import load_dotenv
 import bleach
-
+from flask_login import UserMixin
 allowed_tags = ['iframe']
 allowed_attrs = {
     'iframe': ['src', 'width', 'height', 'style']
@@ -50,6 +50,7 @@ load_dotenv()
 app = Flask(__name__)
 oauth = OAuth(app)
 # 3) Единая конфигурация из переменных окружения
+BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:7010")
 app.config.update(
     SECRET_KEY=os.getenv("SECRET_KEY"),
     SECRET_SEND_KEY=os.getenv("SECRET_SEND_KEY"),
@@ -70,9 +71,7 @@ google = oauth.register(
     name="google",
     client_id=os.getenv("GOOGLE_CLIENT_ID"),
     client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
-    access_token_url=os.getenv("GOOGLE_ACCESS_TOKEN_URL", "https://oauth2.googleapis.com/token"),
-    authorize_url=os.getenv("GOOGLE_AUTHORIZE_URL", "https://accounts.google.com/o/oauth2/auth"),
-    jwks_uri=os.getenv("GOOGLE_JWKS_URI", "https://www.googleapis.com/oauth2/v3/certs"),
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     client_kwargs={"scope": "openid email profile"},
 )
 # жёстко падаем, если нет ключей
@@ -87,8 +86,16 @@ if _missing:
 mail = Mail(app)
 app.mail = mail   # чтобы email_service мог находить mail
 ts   = URLSafeTimedSerializer(app.config["SECRET_SEND_KEY"])
-login_manager = LoginManager(app)
 
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login_google"
+
+@login_manager.user_loader
+def load_user(user_id):
+    return db_session.create_session().get(User, int(user_id))
+
+from flask_login import UserMixin
 
 # 5) Зарегистрировать блюпринты и БД
 app.register_blueprint(admin_bp)
@@ -103,7 +110,7 @@ db_session.global_init("databases/places.db")
 
 def _like_insensitive(col, text: str):
     # универсально для SQLite/PG: lower(col) LIKE '%text%'
-    return func.lower(col).like(f"%{text.lower()}%")
+   return func.lower(col).like(f"%{text.lower()}%", escape="\\")
 
 def _serialize_route(r):
     return {
@@ -126,10 +133,21 @@ def _q_tokens(q: str):
     import re
     return [t for t in re.split(r"[^\wёЁа-яА-Яa-zA-Z0-9]+", (q or "").strip()) if len(t) >= 2]
 
+from sqlalchemy import or_
+
 def _like_ci(col, term: str):
-    # работает на SQLite и PG
-    forms = {term, term.capitalize(), term.title(), term.upper()}
-    return or_(*[col.like(f"%{f}%") for f in forms])
+    # Ограничиваем длину
+    term = str(term)[:100]
+    # Экранируем спецсимволы
+    safe_term = term.replace("%", "\\%").replace("_", "\\_")
+    
+    forms = {
+        safe_term,
+        safe_term.capitalize(),
+        safe_term.title(),
+        safe_term.upper(),
+    }
+    return or_(*[col.like(f"%{f}%", escape="\\") for f in forms])
 
 
 
@@ -347,10 +365,11 @@ def _cul_model():
     return None
 
 def _string_contains(col, value):
+    value = str(value)[:100]
     try:
-        return col.ilike(f"%{value}%")
+        return col.ilike(f"%{value}%", escape="\\")
     except Exception:
-        return col.like(f"%{value}%")
+        return col.like(f"%{value}%", escape="\\")
 
 def _save_image(file_storage, subdir="img"):
     if not file_storage or file_storage.filename == "":
@@ -873,39 +892,42 @@ def load_user(user_id):
     db_sess = db_session.create_session()
     return db_sess.query(User).get(user_id)
 
+
 @app.route("/login/google")
 def login_google():
-    nonce = secrets.token_urlsafe(16)
-    session["nonce"] = nonce
-    return google.authorize_redirect(
-        url_for("auth_callback", _external=True),
-        nonce=nonce  # <-- обязательно
-    )
+    redirect_uri = url_for("auth_callback", _external=True)
+    return google.authorize_redirect(redirect_uri)
+
 
 @app.route("/login/callback")
 def auth_callback():
     token = google.authorize_access_token()
     if not token:
         return "Ошибка авторизации", 400
-    try:
-        nonce = session.pop("nonce", None)
-        if not nonce:
-            return "Ошибка: nonce отсутствует", 400
-        user_info = google.parse_id_token(token, nonce=nonce)
-    except Exception as e:
-        return f"Ошибка обработки токена: {str(e)}", 400
+
+    resp = google.get("https://openidconnect.googleapis.com/v1/userinfo")
+    user_info = resp.json()
+
     db_sess = db_session.create_session()
-    user = db_sess.query(User).filter(User.email == user_info["email"]).first()
+    user = db_sess.query(User).filter_by(email=user_info["email"]).first()
     if not user:
         user = User(
             name=user_info.get("name", "Без имени"),
-            email=user_info["email"]
+            email=user_info["email"],
+            is_active=True   # <-- важно, иначе не войдёт
         )
         db_sess.add(user)
         db_sess.commit()
-    login_user(user, remember=True)
-    return redirect("/user_office")
 
+    # если у существующего пользователя is_active=False → активируем
+    if not user.is_active:
+        user.is_active = True
+        db_sess.commit()
+
+    login_user(user, remember=True)
+    db_sess.close()
+
+    return redirect(url_for("user_office"))
 
 
 

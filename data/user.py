@@ -42,7 +42,6 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     
     weekly_streak = sqlalchemy.Column(sqlalchemy.Integer, default=0)
 
-    is_active = sqlalchemy.Column(sqlalchemy.Boolean, default=False, nullable=False)
 
     def get_completed_cul_ids(self):
         import re
@@ -75,9 +74,6 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     def check_password(self, password):
         return check_password_hash(self.password, password)
     
-    def get_total_photos(self):
-        if not self.completed_routes:
-            return 0
 
         # Считаем количество завершённых маршрутов с ключом route_cul_*
         return sum(
