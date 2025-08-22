@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
-
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <style>
     :root{
       --bg:#F9FBFF; --panel:#FFFFFF; --ink:#0B1220; --muted:#566179;
@@ -512,7 +512,9 @@
   function bindAdminQuick(){
     var gridEl=document.getElementById('routes-grid'); if(!gridEl) return;
     function post(url, fd){
-      return fetch(url,{method:'POST',body:fd,credentials:'include'})
+      return fetch(url,{method:'POST',body:fd,credentials:'include',  headers: {
+        'X-CSRFToken': csrfToken
+      }})
         .then(function(res){ return res.json().catch(function(){return{};}).then(function(d){return{ok:res.ok,data:d};}); })
         .then(function(x){ if(!x.ok || !x.data.success) throw new Error(x.data.error||'Ошибка'); return x.data; });
     }
@@ -637,7 +639,9 @@ document.addEventListener('DOMContentLoaded', function(){
     var fd = new FormData(admForm);
     // если у вас другой URL — поменяйте здесь
     var url = fd.get('id') ? '/cul/admin/save/'+fd.get('id') : '/cul/admin/create';
-    fetch(url, { method:'POST', body:fd, credentials:'include' })
+    fetch(url, { method:'POST', body:fd, credentials:'include',  headers: {
+        'X-CSRFToken': csrfToken
+      } })
       .then(res => res.json().catch(()=>({})).then(data => ({ok:res.ok, data})))
       .then(({ok,data})=>{
         if(!ok || !data?.success) throw new Error(data?.error || 'Ошибка сохранения');
@@ -667,7 +671,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // POST helper
   async function postJSON(url, fd = new FormData()) {
-    const res  = await fetch(url, { method: 'POST', body: fd, credentials: 'include' });
+    const res  = await fetch(url, { method: 'POST', body: fd, credentials: 'include', headers: {
+      'X-CSRFToken': csrfToken
+    } });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data?.success === false) throw new Error(data?.error || 'Ошибка');
     return data;

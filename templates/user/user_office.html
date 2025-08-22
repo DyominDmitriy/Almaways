@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Личный кабинет — Almaways</title>
 
   <!-- Шрифты/Иконки -->
@@ -347,7 +348,9 @@
       const badge=document.getElementById('avatar-badge');
       const form=document.getElementById('avatar-form');
       if(!input||!img||!form) return; form.addEventListener('submit',e=>e.preventDefault());
-      let lock=false; input.addEventListener('change',async function(){ if(lock||!this.files||!this.files[0]) return; const f=this.files[0]; if(!/^image\/(png|jpe?g|webp)$/i.test(f.type)){alert('Только PNG/JPG/WEBP'); this.value=''; return;} if(f.size>6*1024*1024){alert('Файл >6MB'); this.value=''; return;} const fd=new FormData(form); lock=true; img.style.opacity=.6; if(badge){badge.innerHTML='<i class="fa fa-spinner fa-spin"></i>'} try{ const res=await fetch('{{ url_for('upload_avatar') }}',{method:'POST',body:fd,credentials:'include'}); const data=await res.json(); if(data.success&&data.filename){ img.src='{{ url_for('static', filename='avatars/') }}'+data.filename+'?v='+Date.now(); } else { alert('Ошибка: '+(data.error||'Не удалось загрузить')); } } catch(e){ console.error(e); alert('Сервер недоступен'); } finally { img.style.opacity=1; if(badge){badge.innerHTML='<i class="fa fa-camera"></i>'} this.value=''; lock=false; } });
+      let lock=false; input.addEventListener('change',async function(){ if(lock||!this.files||!this.files[0]) return; const f=this.files[0]; if(!/^image\/(png|jpe?g|webp)$/i.test(f.type)){alert('Только PNG/JPG/WEBP'); this.value=''; return;} if(f.size>6*1024*1024){alert('Файл >6MB'); this.value=''; return;} const fd=new FormData(form); lock=true; img.style.opacity=.6; if(badge){badge.innerHTML='<i class="fa fa-spinner fa-spin"></i>'} try{ const res=await fetch('{{ url_for('upload_avatar') }}',{method:'POST',body:fd,credentials:'include', headers: {
+        'X-CSRFToken': csrfToken   // <<< вот ключевой момент
+      }}); const data=await res.json(); if(data.success&&data.filename){ img.src='{{ url_for('static', filename='avatars/') }}'+data.filename+'?v='+Date.now(); } else { alert('Ошибка: '+(data.error||'Не удалось загрузить')); } } catch(e){ console.error(e); alert('Сервер недоступен'); } finally { img.style.opacity=1; if(badge){badge.innerHTML='<i class="fa fa-camera"></i>'} this.value=''; lock=false; } });
     })();
   </script>
 </body>

@@ -16,6 +16,8 @@ from flask_login import (
 from authlib.integrations.flask_client import OAuth
 from werkzeug.utils import secure_filename
 
+
+
 from data import db_session
 from data.user import User, Route
 from admin import admin_bp
@@ -27,7 +29,8 @@ from flask_login import login_required, current_user, logout_user
 from sqlalchemy import func, desc
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
-import os, uuid, imghdr
+import os, uuid
+from PIL import Image
 
 from flask import request, jsonify, render_template, url_for, current_app
 from flask_login import login_required, current_user
@@ -46,17 +49,33 @@ app = Flask(__name__)
 
 # 3) Единая конфигурация из переменных окружения
 app.config.update(
-    SECRET_KEY       = os.getenv("SECRET_KEY"),
-    SECRET_SEND_KEY  = os.getenv("SECRET_SEND_KEY"),
-    MAIL_SERVER      = os.getenv("MAIL_SERVER", "smtp.gmail.com"),
-    MAIL_PORT        = int(os.getenv("MAIL_PORT", "587")),
-    MAIL_USE_TLS     = os.getenv("MAIL_USE_TLS", "True")  == "True",
-    MAIL_USE_SSL     = os.getenv("MAIL_USE_SSL", "False") == "True",
-    MAIL_USERNAME    = os.getenv("MAIL_USERNAME"),
-    MAIL_PASSWORD    = os.getenv("MAIL_PASSWORD"),
-    PERMANENT_SESSION_LIFETIME = datetime.timedelta(days=365),
-    UPLOAD_FOLDER    = os.path.join(app.root_path, 'static', 'avatars'),
+    SECRET_KEY=os.getenv("SECRET_KEY"),
+    SECRET_SEND_KEY=os.getenv("SECRET_SEND_KEY"),
+    MAIL_SERVER=os.getenv("MAIL_SERVER", "smtp.gmail.com"),
+    MAIL_PORT=int(os.getenv("MAIL_PORT", "587")),
+    MAIL_USE_TLS=os.getenv("MAIL_USE_TLS", "True") == "True",
+    MAIL_USE_SSL=os.getenv("MAIL_USE_SSL", "False") == "True",
+    MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
+    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
+    PERMANENT_SESSION_LIFETIME=datetime.timedelta(days=365),
+    UPLOAD_FOLDER=os.path.join(app.root_path, 'static', 'avatars'),  # оставим как есть, чтобы ничего не ломать
+    MAX_CONTENT_LENGTH=6 * 1024 * 1024,
+
+    # флаги безопасности cookie
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SECURE=False,      # включай на проде с HTTPS
+    SESSION_COOKIE_SAMESITE="Lax",
 )
+
+# жёстко падаем, если нет ключей
+_required = ["SECRET_KEY", "SECRET_SEND_KEY", "MAIL_USERNAME", "MAIL_PASSWORD"]
+_missing = [k for k in _required if not app.config.get(k)]
+if _missing:
+    raise RuntimeError(f"Missing required secrets: {', '.join(_missing)}")
+
+from flask_wtf.csrf import CSRFProtect
+csrf = CSRFProtect()
+csrf.init_app(app)
 
 # 4) Инициализировать расширения
 mail = Mail(app)

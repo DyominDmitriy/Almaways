@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{{ route.title or route.name }} — Almaways</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -208,12 +209,16 @@
 
     bDone?.addEventListener('click', async ()=>{
       const nowOn = bDone.classList.contains('ghost');
-      const res = await fetch('{{ url_for("update_route_state") }}',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({route_id:rid,new_state:nowOn})});
+      const res = await fetch('{{ url_for("update_route_state") }}',{method:'POST',headers:{'Content-Type':'application/json',  headers: {
+        'X-CSRFToken': csrfToken
+      }},credentials:'include',body:JSON.stringify({route_id:rid,new_state:nowOn})});
       const d = await res.json(); if(res.ok && d.status==='success') setDone(nowOn); else alert('Не удалось сохранить');
     });
     bFav?.addEventListener('click', async ()=>{
       const nowOn = bFav.classList.contains('ghost');
-      const res = await fetch('{{ url_for("update_route_state_fav") }}',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({route_id:favKey,new_state_fav:nowOn})});
+      const res = await fetch('{{ url_for("update_route_state_fav") }}',{method:'POST',headers:{'Content-Type':'application/json', headers: {
+        'X-CSRFToken': csrfToken
+      }},credentials:'include',body:JSON.stringify({route_id:favKey,new_state_fav:nowOn})});
       const d = await res.json(); if(res.ok && d.status==='success') setFav(nowOn); else alert('Не удалось сохранить');
     });
     bShare?.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(location.href); bShare.textContent='Ссылка скопирована'; setTimeout(()=>bShare.innerHTML='<i class="fa-solid fa-share-nodes"></i> Поделиться',1400);}catch(_){} });
@@ -237,7 +242,9 @@
 
     // админ действия
     {% if current_user.is_authenticated and current_user.is_admin %}
-    function post(u){return fetch(u,{method:'POST',credentials:'include'}).then(r=>r.json().catch(()=>({})).then(d=>({ok:r.ok,data:d})))}
+    function post(u){return fetch(u,{method:'POST',credentials:'include',  headers: {
+        'X-CSRFToken': csrfToken
+      }}).then(r=>r.json().catch(()=>({})).then(d=>({ok:r.ok,data:d})))}
     document.getElementById('adm-pub')?.addEventListener('click', async (e)=>{e.preventDefault(); const x=await post('{{ url_for("cul_admin_toggle_publish", rid=route.id) }}'); alert(x.ok&&x.data.success?'Статус публикации переключён':'Ошибка');});
     document.getElementById('adm-del')?.addEventListener('click', async (e)=>{e.preventDefault(); if(!confirm('Удалить маршрут?')) return; const x=await post('{{ url_for("cul_admin_delete", rid=route.id) }}'); if(x.ok&&x.data.success) location.href='{{ url_for("cultural_routes") }}'; else alert('Ошибка');});
     {% endif %}
