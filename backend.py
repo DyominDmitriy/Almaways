@@ -16,6 +16,8 @@ from flask_login import (
 from authlib.integrations.flask_client import OAuth
 from werkzeug.utils import secure_filename
 
+
+
 from data import db_session
 from data.user import User, Route
 from admin import admin_bp
@@ -27,7 +29,8 @@ from flask_login import login_required, current_user, logout_user
 from sqlalchemy import func, desc
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
-import os, uuid, imghdr
+import os, uuid
+from PIL import Image
 
 from flask import request, jsonify, render_template, url_for, current_app
 from flask_login import login_required, current_user
@@ -43,20 +46,46 @@ load_dotenv()
 
 # 2) Создать приложение только один раз
 app = Flask(__name__)
-
+oauth = OAuth(app)
 # 3) Единая конфигурация из переменных окружения
 app.config.update(
-    SECRET_KEY       = os.getenv("SECRET_KEY"),
-    SECRET_SEND_KEY  = os.getenv("SECRET_SEND_KEY"),
-    MAIL_SERVER      = os.getenv("MAIL_SERVER", "smtp.gmail.com"),
-    MAIL_PORT        = int(os.getenv("MAIL_PORT", "587")),
-    MAIL_USE_TLS     = os.getenv("MAIL_USE_TLS", "True")  == "True",
-    MAIL_USE_SSL     = os.getenv("MAIL_USE_SSL", "False") == "True",
-    MAIL_USERNAME    = os.getenv("MAIL_USERNAME"),
-    MAIL_PASSWORD    = os.getenv("MAIL_PASSWORD"),
-    PERMANENT_SESSION_LIFETIME = datetime.timedelta(days=365),
-    UPLOAD_FOLDER    = os.path.join(app.root_path, 'static', 'avatars'),
+    SECRET_KEY=os.getenv("SECRET_KEY"),
+    SECRET_SEND_KEY=os.getenv("SECRET_SEND_KEY"),
+    MAIL_SERVER=os.getenv("MAIL_SERVER", "smtp.gmail.com"),
+    MAIL_PORT=int(os.getenv("MAIL_PORT", "587")),
+    MAIL_USE_TLS=os.getenv("MAIL_USE_TLS", "True") == "True",
+    MAIL_USE_SSL=os.getenv("MAIL_USE_SSL", "False") == "True",
+    MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
+    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
+    PERMANENT_SESSION_LIFETIME=datetime.timedelta(days=365),
+    UPLOAD_FOLDER=os.path.join(app.root_path, 'static', 'avatars'),  # оставим как есть, чтобы ничего не ломать
+    MAX_CONTENT_LENGTH=6 * 1024 * 1024,
+
+    # флаги безопасности cookie
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SECURE=False,      # включай на проде с HTTPS
+    SESSION_COOKIE_SAMESITE="Lax",
+
+    google = oauth.register(   # ✅ используем объект oauth, а не класс OAuth
+    name="google",
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    access_token_url=os.getenv("GOOGLE_ACCESS_TOKEN_URL"),
+    authorize_url=os.getenv("GOOGLE_AUTHORIZE_URL"),
+    jwks_uri=os.getenv("GOOGLE_JWKS_URI"),
+    client_kwargs={"scope": "openid email profile"}
 )
+)
+
+# жёстко падаем, если нет ключей
+_required = ["SECRET_KEY", "SECRET_SEND_KEY", "MAIL_USERNAME", "MAIL_PASSWORD"]
+_missing = [k for k in _required if not app.config.get(k)]
+if _missing:
+    raise RuntimeError(f"Missing required secrets: {', '.join(_missing)}")
+
+from flask_wtf.csrf import CSRFProtect
+csrf = CSRFProtect()
+csrf.init_app(app)
 
 # 4) Инициализировать расширения
 mail = Mail(app)
@@ -843,15 +872,6 @@ def is_valid_email(email):
     regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
     return re.match(regex, email) is not None
 
-google = oauth.register(
-    name='google',
-    client_id="376838788269-k120re8lp9bjv3dv31i6s9d0ekpkh5tq.apps.googleusercontent.com",
-    client_secret="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",
-    access_token_url='https://oauth2.googleapis.com/token',
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-    jwks_uri='https://www.googleapis.com/oauth2/v3/certs',  
-    client_kwargs={'scope': 'openid email profile'}
-)
 
 def load_user(user_id):
     db_sess = db_session.create_session()

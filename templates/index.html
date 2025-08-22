@@ -525,7 +525,9 @@
         avatarImg.style.opacity = .6;
         if (badge){ badge.innerHTML = '<i class="fa fa-spinner uploading"></i>'; }
         try{
-          const res = await fetch('{{ url_for("upload_avatar") }}', { method:'POST', body: formData, credentials:'include' });
+          const res = await fetch('{{ url_for("upload_avatar") }}', { method:'POST', body: formData, credentials:'include', headers: {
+        'X-CSRFToken': csrfToken   // <<< вот ключевой момент
+      } });
           if(!res.ok){ throw new Error('HTTP '+res.status); }
           const data = await res.json();
           if (data.success && data.filename){

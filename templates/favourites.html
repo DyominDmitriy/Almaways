@@ -255,7 +255,7 @@
     const key = `cul_${id}_fav`;
     const res = await fetch('/update_route_state_fav', {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','X-CSRFToken': csrfToken },
       credentials:'include',
       body: JSON.stringify({route_id:key, new_state_fav: state})
     });
