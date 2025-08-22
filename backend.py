@@ -81,9 +81,7 @@ _missing = [k for k in _required if not app.config.get(k)]
 if _missing:
     raise RuntimeError(f"Missing required secrets: {', '.join(_missing)}")
 
-from flask_wtf.csrf import CSRFProtect
-csrf = CSRFProtect()
-csrf.init_app(app)
+
 
 # 4) Инициализировать расширения
 mail = Mail(app)
