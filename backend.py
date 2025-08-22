@@ -1285,30 +1285,37 @@ def upload_avatar():
     if not _allowed(file.filename):
         return jsonify({"success": False, "error": "Разрешены PNG/JPG/WEBP"}), 400
 
-    file.stream.seek(0, os.SEEK_END)
-    size = file.stream.tell()
-    file.stream.seek(0)
+    # лимит и имя файла
+    file.stream.seek(0, os.SEEK_END); size = file.stream.tell(); file.stream.seek(0)
     if size > app.config.get("MAX_CONTENT_LENGTH", 6*1024*1024):
         return jsonify({"success": False, "error": "Файл слишком большой"}), 400
-
     ext = file.filename.rsplit(".", 1)[1].lower()
     fname = f"{current_user.id}_{uuid.uuid4().hex[:8]}.{ext}"
     path = os.path.join(_avatars_dir(), secure_filename(fname))
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     file.save(path)
 
+    # (опционально) валидация картинки
     try:
-        if imghdr.what(path) not in {"png", "jpeg", "jpg", "webp"}:
+        if imghdr.what(path) not in {"png","jpeg","jpg","webp"}:
             os.remove(path)
             return jsonify({"success": False, "error": "Некорректное изображение"}), 400
     except Exception:
         pass
 
-    # обновление пользователя
+    # ✅ правильный коммит через нашу сессию
+    db_sess = db_session.create_session()
     try:
-        current_user.avatar = fname
-        db.session.commit()
+        user = db_sess.get(User, current_user.id)  # или db_sess.merge(current_user)
+        user.avatar = fname
+        db_sess.commit()
     except Exception:
+        db_sess.rollback()
+        try: os.remove(path)
+        except: pass
         return jsonify({"success": False, "error": "DB error"}), 500
+    finally:
+        db_sess.close()
 
     return jsonify({"success": True, "filename": fname})
 
