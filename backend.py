@@ -21,8 +21,6 @@ from flask_login import (
 from authlib.integrations.flask_client import OAuth
 from werkzeug.utils import secure_filename
 
-
-
 from data import db_session
 from data.user import User, Route
 from admin import admin_bp
@@ -34,8 +32,7 @@ from flask_login import login_required, current_user, logout_user
 from sqlalchemy import func, desc
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
-import os, uuid
-from PIL import Image
+import os, uuid, imghdr
 
 from flask import request, jsonify, render_template, url_for, current_app
 from flask_login import login_required, current_user

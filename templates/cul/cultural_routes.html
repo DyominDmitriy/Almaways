@@ -542,9 +542,7 @@
   function bindAdminQuick(){
     var gridEl=document.getElementById('routes-grid'); if(!gridEl) return;
     function post(url, fd){
-      return fetch(url,{method:'POST',body:fd,credentials:'include',  headers: {
-        'X-CSRFToken': csrfToken
-      }})
+      return fetch(url,{method:'POST',body:fd,credentials:'include'})
         .then(function(res){ return res.json().catch(function(){return{};}).then(function(d){return{ok:res.ok,data:d};}); })
         .then(function(x){ if(!x.ok || !x.data.success) throw new Error(x.data.error||'Ошибка'); return x.data; });
     }
@@ -671,9 +669,7 @@ document.addEventListener('DOMContentLoaded', function(){
     var fd = new FormData(admForm);
     // если у вас другой URL — поменяйте здесь
     var url = fd.get('id') ? '/cul/admin/save/'+fd.get('id') : '/cul/admin/create';
-    fetch(url, { method:'POST', body:fd, credentials:'include',  headers: {
-        'X-CSRFToken': csrfToken
-      } })
+    fetch(url, { method:'POST', body:fd, credentials:'include' })
       .then(res => res.json().catch(()=>({})).then(data => ({ok:res.ok, data})))
       .then(({ok,data})=>{
         if(!ok || !data?.success) throw new Error(data?.error || 'Ошибка сохранения');
@@ -703,9 +699,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // POST helper
   async function postJSON(url, fd = new FormData()) {
-    const res  = await fetch(url, { method: 'POST', body: fd, credentials: 'include', headers: {
-      'X-CSRFToken': csrfToken
-    } });
+    const res  = await fetch(url, { method: 'POST', body: fd, credentials: 'include' });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data?.success === false) throw new Error(data?.error || 'Ошибка');
     return data;

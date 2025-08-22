@@ -3,7 +3,6 @@
  <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title data-i18n="">
    Арт-прогулка
   </title>
@@ -324,9 +323,7 @@
           
           const response = await fetch('/update_route_state', {
               method: 'POST',
-              headers: {'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken 
-              },
+              headers: {'Content-Type': 'application/json'},
               body: JSON.stringify({
                   route_id: routeId,
                   new_state: newState
@@ -392,9 +389,7 @@
           
           const response = await fetch('/update_route_state_fav', {
               method: 'POST',
-              headers: {'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken 
-              },
+              headers: {'Content-Type': 'application/json'},
               body: JSON.stringify({
                   route_id: routeId,
                   new_state_fav: newState
