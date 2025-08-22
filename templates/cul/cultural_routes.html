@@ -571,7 +571,146 @@
   // back/forward
   window.addEventListener('popstate', function(){ fetchAndRender({}, false); });
 })();
-</script>
+// === INIT missing bindings ===
+document.addEventListener('DOMContentLoaded', function(){
+  // 1) Активируем быстрые админ-кнопки для стартового HTML
+  if (typeof bindAdminQuick === 'function') bindAdminQuick();
 
+  // 2) Бургер/сайдбар
+  var burger = document.getElementById('burger-menu');
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('overlay');
+  function closeSidebar(){ sidebar?.classList.remove('active'); overlay?.classList.remove('active'); burger?.classList.remove('active'); }
+  burger?.addEventListener('click', function(){
+    burger.classList.toggle('active');
+    sidebar?.classList.toggle('active');
+    overlay?.classList.toggle('active');
+  });
+  overlay?.addEventListener('click', closeSidebar);
+
+  // 3) Фильтры (дровер)
+  var fOpen = document.getElementById('open-filters');
+  var fClose = document.getElementById('close-filters');
+  var fDrawer = document.getElementById('filters-drawer');
+  var fOverlay = document.getElementById('filters-overlay');
+  function openFilters(){ fDrawer?.classList.add('active'); fOverlay?.classList.add('active'); fOverlay?.removeAttribute('hidden'); }
+  function closeFilters(){ fDrawer?.classList.remove('active'); fOverlay?.classList.remove('active'); }
+  fOpen?.addEventListener('click', openFilters);
+  fClose?.addEventListener('click', closeFilters);
+  fOverlay?.addEventListener('click', closeFilters);
+
+  // 4) Теги фильтров (#f_cats, #f_diff)
+  function wireTagContainer(id){
+    var box = document.getElementById(id);
+    if(!box) return;
+    box.addEventListener('click', function(e){
+      var b = e.target.closest('.tag'); if(!b) return;
+      b.classList.toggle('active');
+      // перерисовываем с page=1 и пушим URL
+      if (typeof fetchAndRender === 'function') fetchAndRender({page:1}, true);
+    });
+  }
+  wireTagContainer('f_cats');
+  wireTagContainer('f_diff');
+
+  // 5) Админ-панель: открыть/закрыть/новый
+  var admPanel = document.getElementById('adm_panel');
+  var admOpen  = document.getElementById('adm_open');
+  var admClose = document.getElementById('adm_close');
+  var admNew   = document.getElementById('adm_new');
+  var admForm  = document.getElementById('adm_form');
+
+  function openAdm(){ admPanel?.classList.add('active'); }
+  function closeAdm(){ admPanel?.classList.remove('active'); }
+  admOpen?.addEventListener('click', openAdm);
+  admClose?.addEventListener('click', closeAdm);
+
+  admNew?.addEventListener('click', function(){
+    if(!admForm) return;
+    admForm.reset();
+    var id = document.getElementById('adm_id'); if (id) id.value = '';
+  });
+
+  // 6) Сабмит формы (создать/обновить)
+  admForm?.addEventListener('submit', function(e){
+    e.preventDefault();
+    var fd = new FormData(admForm);
+    // если у вас другой URL — поменяйте здесь
+    var url = fd.get('id') ? '/cul/admin/save/'+fd.get('id') : '/cul/admin/create';
+    fetch(url, { method:'POST', body:fd, credentials:'include' })
+      .then(res => res.json().catch(()=>({})).then(data => ({ok:res.ok, data})))
+      .then(({ok,data})=>{
+        if(!ok || !data?.success) throw new Error(data?.error || 'Ошибка сохранения');
+        // обновляем грид и закрываем панель
+        if (typeof fetchAndRender === 'function') fetchAndRender({}, false);
+        closeAdm();
+      })
+      .catch(err=> alert('Ошибка: ' + err.message));
+  });
+});
+
+</script>
+<script>
+// ==== ADMIN: edit / delete + убрать toggle ====
+document.addEventListener('DOMContentLoaded', function () {
+  const grid = document.getElementById('routes-grid');
+  if (!grid) return;
+
+  // 1) Удаляем кнопку "отключить" (toggle publish) и следим за новыми карточками
+  function removeToggle(root = document) {
+    root.querySelectorAll('[data-adm="publish"]').forEach(b => (b.closest('button') || b).remove());
+  }
+  removeToggle();
+  new MutationObserver(muts => {
+    muts.forEach(m => m.addedNodes.forEach(n => n.nodeType === 1 && removeToggle(n)));
+  }).observe(grid, { childList: true, subtree: true });
+
+  // POST helper
+  async function postJSON(url, fd = new FormData()) {
+    const res  = await fetch(url, { method: 'POST', body: fd, credentials: 'include' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data?.success === false) throw new Error(data?.error || 'Ошибка');
+    return data;
+  }
+
+  // 2) Делегирование кликов по кнопкам на карточках
+  grid.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button.adm-btn');
+    if (!btn) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const id  = btn.dataset.id;
+    const act = btn.dataset.adm;
+    if (!id) return;
+
+    if (act === 'edit') {
+      // открыть админ-панель и подставить ID
+      document.getElementById('adm_panel')?.classList.add('active');
+      const fid = document.getElementById('adm_id');
+      if (fid) fid.value = id;
+      return;
+    }
+
+    if (act === 'delete') {
+      if (!confirm(`Удалить маршрут #${id}?`)) return;
+      try {
+        await postJSON(`/cul/admin/delete/${id}`);
+        // если есть живой ререндер — используем его
+        if (typeof fetchAndRender === 'function') {
+          fetchAndRender({}, false);
+        } else {
+          // иначе просто убираем карточку из DOM
+          (btn.closest('article.card') || btn.closest('[data-id]'))?.remove();
+        }
+      } catch (err) {
+        alert('Ошибка: ' + err.message);
+      }
+      return;
+    }
+  });
+});
+</script>
 </body>
 </html>
