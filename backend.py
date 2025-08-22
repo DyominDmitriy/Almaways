@@ -2,7 +2,12 @@ import os
 import datetime
 import secrets
 from dotenv import load_dotenv
+import bleach
 
+allowed_tags = ['iframe']
+allowed_attrs = {
+    'iframe': ['src', 'width', 'height', 'style']
+}
 from flask import (
     Flask, render_template, redirect, request,
     session, jsonify, url_for, flash, render_template_string, abort, jsonify
@@ -58,25 +63,21 @@ app.config.update(
     MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
     MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
     PERMANENT_SESSION_LIFETIME=datetime.timedelta(days=365),
-    UPLOAD_FOLDER=os.path.join(app.root_path, 'static', 'avatars'),  # оставим как есть, чтобы ничего не ломать
+    UPLOAD_FOLDER=os.path.join(app.root_path, 'static', 'avatars'),
     MAX_CONTENT_LENGTH=6 * 1024 * 1024,
-
-    # флаги безопасности cookie
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SECURE=False,      # включай на проде с HTTPS
+    SESSION_COOKIE_SECURE=False,   # включи на проде
     SESSION_COOKIE_SAMESITE="Lax",
-
-    google = oauth.register(   # ✅ используем объект oauth, а не класс OAuth
+)
+google = oauth.register(
     name="google",
     client_id=os.getenv("GOOGLE_CLIENT_ID"),
     client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
-    access_token_url=os.getenv("GOOGLE_ACCESS_TOKEN_URL"),
-    authorize_url=os.getenv("GOOGLE_AUTHORIZE_URL"),
-    jwks_uri=os.getenv("GOOGLE_JWKS_URI"),
-    client_kwargs={"scope": "openid email profile"}
+    access_token_url=os.getenv("GOOGLE_ACCESS_TOKEN_URL", "https://oauth2.googleapis.com/token"),
+    authorize_url=os.getenv("GOOGLE_AUTHORIZE_URL", "https://accounts.google.com/o/oauth2/auth"),
+    jwks_uri=os.getenv("GOOGLE_JWKS_URI", "https://www.googleapis.com/oauth2/v3/certs"),
+    client_kwargs={"scope": "openid email profile"},
 )
-)
-
 # жёстко падаем, если нет ключей
 _required = ["SECRET_KEY", "SECRET_SEND_KEY", "MAIL_USERNAME", "MAIL_PASSWORD"]
 _missing = [k for k in _required if not app.config.get(k)]
@@ -92,7 +93,7 @@ mail = Mail(app)
 app.mail = mail   # чтобы email_service мог находить mail
 ts   = URLSafeTimedSerializer(app.config["SECRET_SEND_KEY"])
 login_manager = LoginManager(app)
-oauth = OAuth(app)
+
 
 # 5) Зарегистрировать блюпринты и БД
 app.register_blueprint(admin_bp)
