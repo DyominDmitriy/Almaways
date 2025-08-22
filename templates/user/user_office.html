@@ -187,17 +187,27 @@
       <div class="card">
         <div class="kpis">
           <div class="kpi"><h4>Завершено маршрутов</h4><div class="val">{{ completed }}</div></div>
-          <div class="kpi"><h4>Всего маршрутов</h4><div class="val">{{ total_routes }}</div></div>
           <div class="kpi"><h4>Всего часов в пути</h4><div class="val">{{ total_hours }}</div></div>
           <div class="kpi"><h4>Фото в профиле</h4><div class="val">{{ total_photos }}</div></div>
         </div>
       </div>
       <div class="card">
-        <div class="progress">
-          {% set p = progress|int %}
-          {% set R = 54 %}
-          {% set C = 2 * 3.14159 * R %}
-          {% set D = (C * p) / 100 %}
+        <div class="progress" data-completed="{{ completed or 0 }}"
+     data-total="{{ total_routes or 0 }}"
+     data-progress="{{ progress if progress is not none else '' }}">
+     
+            {# === ПРОГРЕСС === #}
+            {% set _completed = (completed or 0)|int %}
+            {% set _total = (total_routes or 0)|int %}
+            {% set raw = progress if progress is not none else (_completed / _total if _total > 0 else 0) %}
+            {# raw может быть 0–1 (доля) или 0–100 (проценты) #}
+            {% set p = (((raw * 100) if raw <= 1 else raw)|round(0, 'floor')|int) %}
+
+            {% set R = 54 %}
+            {% set C = 2 * 3.14159 * R %}
+            {% set D = (C * p) / 100 %}
+
+
           <div class="ring" aria-label="Прогресс">
             <svg width="120" height="120" viewBox="0 0 120 120">
               <circle cx="60" cy="60" r="54" fill="none" stroke="#eef3fb" stroke-width="12"/>
@@ -212,7 +222,8 @@
           </div>
           <div>
             <h3 style="margin:0 0 6px">Прогресс освоения</h3>
-            <p style="margin:0 0 10px">{{ progress }}% от общего числа маршрутов</p>
+            <p style="margin:0 0 10px">{{ p }}% от общего числа маршрутов</p>
+
             <div class="chips">
               <a class="btn" href="/index#choose"><i class="fa-solid fa-plus"></i> Добавить маршрут</a>
               <a class="btn ghost" href="/favourites"><i class="fa-solid fa-bookmark"></i> Перейти в избранное</a>
@@ -257,7 +268,7 @@
         <div class="text-right" style="margin-top:12px"><a class="btn" href="/favourites">Перейти в «Мои маршруты»</a></div>
       </div>
 
-      <div class="panel" id="panel-badges" role="tabpanel" aria-labelledby="tab-badges" style="margin-top:14px"> role="tabpanel" aria-labelledby="tab-badges" style="margin-top:14px">
+      <div class="panel" id="panel-badges" role="tabpanel" aria-labelledby="tab-badges" style="margin-top:14px"> <role="tabpanel" aria-labelledby="tab-badges" style="margin-top:14px">
         <div class="mini-grid">
           <div class="mini-card"><div class="info"><h3>Покоритель гор</h3><p class="text-slate-600">5 горных маршрутов завершено</p></div></div>
           <div class="mini-card"><div class="info"><h3>Хроникёр</h3><p class="text-slate-600">Загружено 50+ фотографий</p></div></div>
@@ -350,5 +361,33 @@
       let lock=false; input.addEventListener('change',async function(){ if(lock||!this.files||!this.files[0]) return; const f=this.files[0]; if(!/^image\/(png|jpe?g|webp)$/i.test(f.type)){alert('Только PNG/JPG/WEBP'); this.value=''; return;} if(f.size>6*1024*1024){alert('Файл >6MB'); this.value=''; return;} const fd=new FormData(form); lock=true; img.style.opacity=.6; if(badge){badge.innerHTML='<i class="fa fa-spinner fa-spin"></i>'} try{ const res=await fetch('{{ url_for('upload_avatar') }}',{method:'POST',body:fd,credentials:'include'}); const data=await res.json(); if(data.success&&data.filename){ img.src='{{ url_for('static', filename='avatars/') }}'+data.filename+'?v='+Date.now(); } else { alert('Ошибка: '+(data.error||'Не удалось загрузить')); } } catch(e){ console.error(e); alert('Сервер недоступен'); } finally { img.style.opacity=1; if(badge){badge.innerHTML='<i class="fa fa-camera"></i>'} this.value=''; lock=false; } });
     })();
   </script>
+  <script>
+  // ===== Прогресс (JS) =====
+  (function(){
+    const root = document.querySelector('.progress'); if(!root) return;
+    const r = 54, C = 2*Math.PI*r;
+    // второй <circle> — это активная дуга
+    const bar   = root.querySelector('svg circle:nth-of-type(2)');
+    const label = root.querySelector('p');
+
+    // 1) пробуем взять из progress; 0–1 → умножаем, 0–100 → оставляем
+    let raw = Number(root.dataset.progress);
+    // 2) если progress не задан — считаем из completed / total
+    const completed = Number(root.dataset.completed);
+    const total     = Number(root.dataset.total);
+
+    let p;
+    if (!Number.isNaN(raw)) {
+      p = Math.round(raw <= 1 ? raw*100 : raw);
+    } else {
+      p = (total > 0) ? Math.round(100*completed/total) : 0;
+    }
+
+    // применяем к кольцу и подписи
+    bar.setAttribute('stroke-dasharray', `${(C*p)/100}, ${C}`);
+    if (label) label.textContent = `${p}% от общего числа маршрутов`;
+  })();
+</script>
+
 </body>
 </html>

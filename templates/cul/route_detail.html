@@ -200,7 +200,8 @@
     function setFav(on){  bFav.classList.toggle('ghost', !on);  bFav.innerHTML  = on? '<i class="fa-solid fa-bookmark"></i> В избранном' : '<i class="fa-regular fa-bookmark"></i> В избранное'; }
 
     fetch('{{ url_for("get_current_user_state") }}',{credentials:'include'}).then(r=>r.json()).then(s=>{
-      const done = s && s.completed_routes && s.completed_routes['route_'+rid]; setDone(!!done);
+      const done = s && s.completed_routes && s.completed_routes['route_cul_'+rid];
+ setDone(!!done);
     });
     fetch('{{ url_for("get_current_user_state_fav") }}',{credentials:'include'}).then(r=>r.json()).then(s=>{
       const fav = s && s.favourite_routes && s.favourite_routes[favKey]; setFav(!!fav);

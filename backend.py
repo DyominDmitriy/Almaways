@@ -578,14 +578,17 @@ def get_current_user_state():
 def get_user_progress():
     db_sess = db_session.create_session()
     try:
-        total_routes = db_sess.query(Route).filter(Route.route_key.like("route_cul_%")).count()
+        total_routes = _cultural_routes_query(db_sess).count()
+
     finally:
         db_sess.close()
 
-    completed = sum(
-        1 for key, v in (current_user.completed_routes or {}).items()
-        if key.startswith("route_cul_") and v
-    )
+    import re
+    RX_DONE = re.compile(r'^(?:route_)?cul_\d+$')
+    completed = sum(1 for k, v in (current_user.completed_routes or {}).items()
+                    if v and RX_DONE.match((k or '').strip()))
+
+
     return jsonify({
         "completed": completed,
         "total_routes": total_routes,
@@ -593,51 +596,44 @@ def get_user_progress():
     })
 
 
+
 @app.route('/update_route_state', methods=['POST'])
 @login_required
 def update_route_state():
     data = request.get_json() or {}
-    route_id = data.get("route_id")
-    new_state = data.get("new_state")
+    route_id  = int(data.get("route_id", 0))
+    new_state = bool(data.get("new_state"))
 
-    if not route_id or new_state is None:
-        return jsonify({"status": "error", "message": "Missing parameters"}), 400
+    if not route_id:
+        return jsonify({"status": "error", "message": "Missing route_id"}), 400
 
     db_sess = db_session.create_session()
     try:
         user = db_sess.merge(current_user)
-
-        # Инициализация словаря
         if not user.completed_routes:
             user.completed_routes = {}
 
-        key = f"route_{route_id}"
-        user.completed_routes[key] = bool(new_state)
+        key = f'route_cul_{route_id}'
+        user.completed_routes[key] = new_state
 
-        # Считаем прогресс: сколько выполнено / общее кол-во маршрутов
-        total_routes = db_sess.query(Route).count()
-        completed_count = sum(
-            1 for key, v in user.completed_routes.items()
-            if key.startswith("route_") or key.startswith("cul_")  and v
-        )
-        user.progress = int((completed_count / total_routes) * 100) if total_routes > 0 else 0
 
+        # тот же способ подсчёта total_routes
+        total_routes = _cultural_routes_query(db_sess).count()
+
+        import re
+        rx = re.compile(r'^(?:route_)?cul_\d+$')
+        completed = sum(1 for k, v in (user.completed_routes or {}).items() if v and rx.match(k))
+
+        user.progress = round(100 * completed / (total_routes)) if total_routes else 0
         db_sess.commit()
-        db_sess.refresh(user)
-
-        return jsonify({
-            "status": "success",
-            "new_state": bool(new_state),
-            "progress": user.progress,
-            "completed_routes": user.completed_routes
-        })
+        return jsonify({"status": "success", "progress": user.progress})
     except Exception as e:
         db_sess.rollback()
-        print(f"Database error: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
     finally:
         db_sess.close()
 
+import re
 
 @app.route('/favourites')
 @login_required
@@ -920,10 +916,34 @@ def confirm_email(token):
 
     return redirect('/user_login')
 
+from sqlalchemy import or_
+
+
+
 def get_total_cul_routes_count():
     db_sess = db_session.create_session()
     try:
-        return db_sess.query(Route).filter(Route.id.like('cul_%')).count()
+        return db_sess.query(Route).filter(
+            or_(Route.route_key.like('route_cul_%'),
+                Route.route_key.like('cul_%'))   # на всякий случай старые ключи
+        ).count()
+    finally:
+        db_sess.close()
+
+
+# добавь вверху
+from sqlalchemy import or_, func
+
+def _cultural_routes_query(db_sess):
+    # учитываем и старые ключи, и лишние пробелы
+    return (db_sess.query(Route)
+            .filter(or_(func.trim(Route.route_key).like('route_cul_%'),
+                        func.trim(Route.route_key).like('cul_%'))))
+
+def get_total_cul_routes_count():
+    db_sess = db_session.create_session()
+    try:
+        return _cultural_routes_query(db_sess).count()
     finally:
         db_sess.close()
 
@@ -949,7 +969,7 @@ def user_office():
 
     completed = len(user.get_completed_cul_ids())
     total_routes = get_total_cul_routes_count()
-
+    print(total_routes)
     total_hours = user.get_total_hours(db_sess)
     total_photos = user.get_total_photos()
 
@@ -1057,6 +1077,41 @@ def _stats(user_id):
     return completed, total_routes, total_hours, total_photos, progress
 
 
+
+def repair_route_keys():
+    db_sess = db_session.create_session()
+    try:
+        dirty = False
+        for r in db_sess.query(Route).all():
+            key = (r.route_key or '').strip()
+
+            # route_cul_{id} — наш канон
+            if not key:
+                r.route_key = f'route_cul_{r.id}'; dirty = True
+                continue
+
+            # старые форматы → к канону
+            if key.startswith('cul_'):
+                # cul_123 → route_cul_123
+                suf = key.split('_', 1)[1]
+                r.route_key = f'route_cul_{suf}'; dirty = True
+            elif key.startswith('route_') and not key.startswith('route_cul_'):
+                # route_123 → route_cul_123
+                suf = key.split('_', 1)[1]
+                if suf.isdigit():
+                    r.route_key = f'route_cul_{suf}'; dirty = True
+            else:
+                # на всякий trimming
+                if key != r.route_key:
+                    r.route_key = key; dirty = True
+
+        if dirty:
+            db_sess.commit()
+    finally:
+        db_sess.close()
+
+# вызови один раз при старте приложения (например, в create_app или перед run)
+repair_route_keys()
 
 
 @app.route("/update_profile", methods=["POST"])

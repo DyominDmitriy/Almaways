@@ -55,14 +55,23 @@ def add_route():
             map_embed=request.form.get('map_embed') or ''
         )
         session.add(route)
+        session.refresh(route)  # на всякий случай
+        route.route_key = f"route_cul_{route.id}"
         session.commit()
+        session.refresh(route)
+        if not route.route_key or not route.route_key.strip():
+            route.route_key = f'route_cul_{route.id}'
+        
         new_id = route.id
+        session.commit()
         session.close()
 
         flash('Маршрут создан.', 'success')
         return redirect(url_for('admin.routes_list'))
 
     return render_template('cul/admin_edit_route.html', route=None)
+
+
 
 # --- Редактирование ---
 @admin_bp.route('/routes/edit/<int:id>', methods=['GET', 'POST'])

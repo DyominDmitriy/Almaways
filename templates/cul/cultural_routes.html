@@ -10,7 +10,27 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 
-  <style>
+  
+<!-- Tailwind CSS (utility) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            jewel: {
+              sapphire: '#B5CEF5',
+              emerald:  '#2E6D9C'
+            }
+          },
+          fontFamily: { sans: ['Poppins','system-ui','sans-serif'], serif: ['Playfair Display','serif'] },
+          boxShadow: { card:'0 10px 30px rgba(2, 6, 23, .06)', float:'0 20px 50px rgba(46,109,156,.22)' },
+          borderRadius: { xxl: '1.25rem' }
+        }
+      }
+    }
+  </script>
+<style>
     :root{
       --bg:#F9FBFF; --panel:#FFFFFF; --ink:#0B1220; --muted:#566179;
       --primary:#B5CEF5; --secondary:#2E6D9C; --ring:#B5CEF5;
@@ -117,19 +137,27 @@
 /* не даём Jinja споткнуться на "{ #": всегда пробел после "{" перед #id */
 @media (max-width:1100px) { #routes-grid { grid-template-columns: repeat(2,1fr); } }
 @media (max-width:680px)  { #routes-grid { grid-template-columns: 1fr; } }
-  </style>
+  /* ==== Burger/Sidebar from index ==== */
+.mobile-header{position:sticky; top:0; inset-inline:0; height:64px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; background:rgba(255,255,255,.9); backdrop-filter: blur(10px); z-index:50; border-bottom:1px solid rgba(2,6,23,.06)}
+.sidebar{position:fixed; top:0; left:0; height:100vh; width:320px; background:#fff; box-shadow:0 12px 40px rgba(2,6,23,.08); transform:translateX(-100%); transition:.3s transform; z-index:60; overflow:auto}
+.sidebar.mobile-active{transform:translateX(0)}
+.menu-overlay{position:fixed; inset:0; background:rgba(15,23,42,.28); opacity:0; visibility:hidden; transition:.25s; z-index:55}
+.menu-overlay.active{opacity:1; visibility:visible}
+</style>
 </head>
 <body>
 
-<header class="header">
-  <div class="burger-menu" id="burger-menu"><span></span><span></span><span></span></div>
-  <div class="brand">
-    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo"/>
-    <strong>Almaways</strong>
-  </div>
-  <div class="hidden sm:flex items-center gap-2">
-    <a href="/index" class="btn ghost" style="padding:.55rem 1rem">На главную</a>
-    <a href="/favourites" class="btn" style="padding:.55rem 1rem">Избранное</a>
+<header>
+  <div class="mobile-header">
+    <div class="burger-menu" id="burger-menu"><span></span><span></span><span></span></div>
+    <div class="flex items-center gap-3">
+      <img class="mobile-logo h-8" src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" />
+      <span class="font-bold text-[color:var(--secondary)] hidden sm:block">Almaways</span>
+    </div>
+    <div class="hidden sm:flex items-center gap-2">
+      <a href="/index" class="py-2 px-3 rounded-full bg-[color:var(--secondary)] text-white text-sm font-semibold">На главную</a>
+      <a href="/favourites" class="py-2 px-3 rounded-full bg-[color:var(--secondary)] text-white text-sm font-semibold">Избранное</a>
+    </div>
   </div>
 </header>
 <aside class="sidebar" id="sidebar">
@@ -141,7 +169,7 @@
     <a href="/logout"><i class="fas fa-sign-out-alt"></i>Выход</a>
   </nav>
 </aside>
-<div class="overlay" id="overlay"></div>
+<div class="menu-overlay" id="menu-overlay"></div>
 
 <main class="container" style="padding:18px 0 28px">
   <!-- Hero -->
@@ -576,19 +604,21 @@ document.addEventListener('DOMContentLoaded', function(){
   // 1) Активируем быстрые админ-кнопки для стартового HTML
   if (typeof bindAdminQuick === 'function') bindAdminQuick();
 
-  // 2) Бургер/сайдбар
-  var burger = document.getElementById('burger-menu');
-  var sidebar = document.getElementById('sidebar');
-  var overlay = document.getElementById('overlay');
-  function closeSidebar(){ sidebar?.classList.remove('active'); overlay?.classList.remove('active'); burger?.classList.remove('active'); }
-  burger?.addEventListener('click', function(){
+  
+  // 2) Бургер/сайдбар (как на index)
+  const burger = document.getElementById('burger-menu');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('menu-overlay');
+  function toggleSidebar(){
     burger.classList.toggle('active');
-    sidebar?.classList.toggle('active');
-    overlay?.classList.toggle('active');
-  });
-  overlay?.addEventListener('click', closeSidebar);
+    sidebar.classList.toggle('mobile-active');
+    overlay.classList.toggle('active');
+    document.body.style.overflow = sidebar.classList.contains('mobile-active') ? 'hidden' : '';
+  }
+  burger?.addEventListener('click', toggleSidebar);
+  overlay?.addEventListener('click', toggleSidebar);
 
-  // 3) Фильтры (дровер)
+  // 3) Фильтры (дровер) Фильтры (дровер)
   var fOpen = document.getElementById('open-filters');
   var fClose = document.getElementById('close-filters');
   var fDrawer = document.getElementById('filters-drawer');
