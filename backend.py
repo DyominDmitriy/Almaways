@@ -46,7 +46,7 @@ load_dotenv()
 
 # 2) Создать приложение только один раз
 app = Flask(__name__)
-
+oauth = OAuth(app)
 # 3) Единая конфигурация из переменных окружения
 app.config.update(
     SECRET_KEY=os.getenv("SECRET_KEY"),
@@ -65,6 +65,16 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SECURE=False,      # включай на проде с HTTPS
     SESSION_COOKIE_SAMESITE="Lax",
+
+    google = oauth.register(   # ✅ используем объект oauth, а не класс OAuth
+    name="google",
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    access_token_url=os.getenv("GOOGLE_ACCESS_TOKEN_URL"),
+    authorize_url=os.getenv("GOOGLE_AUTHORIZE_URL"),
+    jwks_uri=os.getenv("GOOGLE_JWKS_URI"),
+    client_kwargs={"scope": "openid email profile"}
+)
 )
 
 # жёстко падаем, если нет ключей
@@ -866,15 +876,6 @@ def is_valid_email(email):
     regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
     return re.match(regex, email) is not None
 
-google = oauth.register(
-    name='google',
-    client_id="376838788269-k120re8lp9bjv3dv31i6s9d0ekpkh5tq.apps.googleusercontent.com",
-    client_secret="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",
-    access_token_url='https://oauth2.googleapis.com/token',
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-    jwks_uri='https://www.googleapis.com/oauth2/v3/certs',  
-    client_kwargs={'scope': 'openid email profile'}
-)
 
 def load_user(user_id):
     db_sess = db_session.create_session()
