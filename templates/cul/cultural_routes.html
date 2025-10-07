@@ -309,7 +309,7 @@
             {% endif %}
             <div class="actions">
               <a href="{{ url_for('cul_dynamic', route_id=r.id) }}" class="btn ghost">Открыть</a>
-              <a href="/add_to_favourites/{{ r.id }}" class="btn" aria-label="Добавить в избранное"><i class="fa-regular fa-bookmark"></i></a>
+              <a id = "cul_{{route_id}}_fav" class="btn" aria-label="Добавить в избранное"><i class="fa-regular fa-bookmark"></i></a>
             </div>
           </div>
         </article>
@@ -742,6 +742,73 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
+</script>
+<script>
+  
+ // Загрузка начального состояния
+  async function loadInitialStateFav() {
+    try {
+        const response = await fetch('/get_current_user_state_fav');
+        const data = await response.json();
+        
+        if (data.favourite_routes) {  // ← исправлено с completed_routes на favourite_routes
+            Object.entries(data.favourite_routes).forEach(([routeId, isFavourite]) => {
+                const button = document.getElementById(routeId);
+                if (button) {
+                    button.textContent = isFavourite ? 'в избранном ' : 'Понравился ';
+                    button.classList.toggle('done', isFavourite);
+                }
+            });
+        }
+    } catch (error) {
+        console.error("Ошибка загрузки состояния:", error);
+    }
+}
+  
+  // Обработчик кликов
+  async function handleRouteClickFav(button) {
+      const routeId = button.id;
+      const isCurrentlyFavourite = button.classList.contains('done');
+      const newState = !isCurrentlyFavourite;
+      
+      try {
+          button.disabled = true;
+          
+          const response = await fetch('/update_route_state_fav', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({
+                  route_id: routeId,
+                  new_state_fav: newState
+              })
+          });
+          
+          const result = await response.json();
+          
+          if (result.status === "success") {
+              button.textContent = newState ? 'в Избраном' : 'Понравился ';
+              button.classList.toggle('done', newState);
+              console.log("Состояние обновлено:", result);
+          }
+      } catch (error) {
+          console.error("Ошибка обновления:", error);
+          // Возвращаем предыдущее состояние при ошибке
+          button.textContent = isCurrentlyFavourite ? 'в Избраном' : 'Понравился ';
+          button.classList.toggle('done', isCurrentlyFavourite);
+      } finally {
+          button.disabled = false;
+      }
+  }
+  
+  // Инициализация при загрузке страницы
+  document.addEventListener('DOMContentLoaded', () => {
+      loadInitialStateFav();
+      
+      // Назначаем обработчики всем кнопкам
+      document.querySelectorAll('.route-fav-btn').forEach(btn => {
+          btn.onclick = () => handleRouteClickFav(btn);
+      });
+  });
 </script>
 </body>
 </html>
