@@ -8,799 +8,206 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
-  <script src="{{ url_for('static', filename='js/cul-admin.js') }}"></script>
-  
-<!-- Tailwind CSS (utility) -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            jewel: {
-              sapphire: '#B5CEF5',
-              emerald:  '#2E6D9C'
-            }
-          },
-          fontFamily: { sans: ['Poppins','system-ui','sans-serif'], serif: ['Playfair Display','serif'] },
-          boxShadow: { card:'0 10px 30px rgba(2, 6, 23, .06)', float:'0 20px 50px rgba(46,109,156,.22)' },
-          borderRadius: { xxl: '1.25rem' }
-        }
-      }
-    }
-  </script>
-<style>
-  
-  
-    :root{
-      --bg:#F9FBFF; --panel:#FFFFFF; --ink:#0B1220; --muted:#566179;
-      --primary:#B5CEF5; --secondary:#2E6D9C; --ring:#B5CEF5;
-      --r-s:12px; --r-m:16px; --r-l:22px; --pill:999px;
-      --s-s:0 6px 18px rgba(2,6,23,.06);
-      --s-m:0 14px 34px rgba(2,6,23,.10);
-      --s-l:0 24px 64px rgba(46,109,156,.22);
-    }
-    html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Poppins',system-ui,sans-serif;line-height:1.5;overflow-x:hidden}
-    img{display:block;max-width:100%;height:auto}
-    a{color:var(--secondary);text-decoration:none}
-    .container{max-width:1200px;margin:0 auto;padding:0 16px}
 
-    .btn{display:inline-flex;align-items:center;gap:.6rem;border:0;border-radius:var(--pill);padding:.75rem 1.1rem;font-weight:800;color:#fff;background:linear-gradient(180deg,var(--secondary),var(--primary));box-shadow:0 12px 26px rgba(46,109,156,.25);transition:.18s}
-    .btn:hover{transform:translateY(-2px)}
-    .btn.ghost{background:#fff;color:var(--secondary);border:1px solid var(--primary);box-shadow:var(--s-s)}
-    .input,.select{width:100%;background:var(--panel);border:1px solid #e6eef8;border-radius:14px;padding:12px 14px;color:var(--ink)}
-    .input:focus,.select:focus{outline:2px solid var(--ring);box-shadow:0 0 0 3px rgba(46,109,156,.12)}
-    .chip{display:inline-flex;align-items:center;gap:.35rem;border-radius:var(--pill);padding:.25rem .65rem;background:#EAF2FE;color:#2E6D9C;font-weight:700;font-size:.82rem}
-
-    /* Header (как на других страницах) */
-    .header{position:sticky;top:0;z-index:50;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);border-bottom:1px solid rgba(2,6,23,.06)}
-    .brand{display:flex;align-items:center;gap:10px}
-    .brand img{height:32px}
-    .brand strong{color:var(--secondary)}
-    .burger-menu{width:28px;height:20px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer}
-    .burger-menu span{height:3px;background:var(--ink);border-radius:3px;transition:.25s}
-    .burger-menu.active span:nth-child(1){transform:translateY(8px) rotate(45deg)}
-    .burger-menu.active span:nth-child(2){opacity:0}
-    .burger-menu.active span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
-    .sidebar{position:fixed;inset:0 auto 0 0;width:320px;background:#fff;transform:translateX(-100%);transition:.3s;z-index:60;border-right:1px solid #e6eef8;box-shadow:var(--s-m);overflow:auto}
-    .sidebar.active{transform:translateX(0)}
-    .overlay{position:fixed;inset:0;background:rgba(11,18,32,.28);opacity:0;visibility:hidden;transition:.2s;z-index:55}
-    .overlay.active{opacity:1;visibility:visible}
-    .menu{display:flex;flex-direction:column;gap:6px;padding:8px 14px 18px}
-    .menu a{display:flex;align-items:center;gap:.7rem;padding:10px 12px;border-radius:12px;color:var(--ink);transition:.2s}
-    .menu a:hover{background:#f7faff}
-
-    /* Hero */
-    .hero{margin:16px 0;border-radius:22px;overflow:hidden;background:radial-gradient(800px 240px at 10% -10%, rgba(181,206,245,.28), transparent),linear-gradient(180deg,#fff,#f7fbff);box-shadow:var(--s-m)}
-    .hero-inner{display:grid;grid-template-columns:1fr 520px;gap:18px;align-items:center;padding:18px}
-    @media(max-width:980px){.hero-inner{grid-template-columns:1fr}}
-    .hero h1{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,3.5vw,2.4rem);margin:0}
-    .hero p{margin:.4rem 0 0;color:#566179}
-    .hero-art{position:relative}
-    .hero-art img{width:100%;border-radius:18px;aspect-ratio:16/9;object-fit:cover}
-    .hero-badges{position:absolute;left:12px;bottom:12px;display:flex;gap:8px}
-
-    /* Toolbar */
-    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0}
-    .toolbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-
-    /* Drawer (filters) */
-    .filters-overlay{position:fixed;inset:0;background:rgba(11,18,32,.35);backdrop-filter:blur(2px);z-index:70;opacity:0;visibility:hidden;transition:.2s}
-    .filters-overlay.active{opacity:1;visibility:visible}
-    .filters-drawer{position:fixed;top:0;right:0;bottom:0;width:min(92vw,420px);background:#fff;border-left:1px solid #e6eef8;box-shadow:var(--s-l);transform:translateX(100%);transition:.28s;z-index:80;display:flex;flex-direction:column}
-    .filters-drawer.active{transform:translateX(0)}
-    .filters-head{position:sticky;top:0;background:#fff;border-bottom:1px solid #e6eef8;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
-    .filters-body{padding:14px 16px;display:grid;gap:12px;overflow:auto}
-    .filters-foot{padding:12px 16px;border-top:1px solid #e6eef8;display:flex;gap:8px;justify-content:flex-end}
-    .block{display:block}
-    .block.two{display:grid;grid-template-columns:1fr;gap:12px}
-    @media(min-width:640px){.block.two{grid-template-columns:1fr 1fr}}
-    .lbl{display:block;margin:0 0 6px;color:#566179;font-size:.9rem}
-    .tags{display:flex;gap:8px;flex-wrap:wrap}
-    .tag{border:1px solid #e6eef8;background:#fff;border-radius:999px;padding:.45rem .8rem;cursor:pointer;transition:.15s}
-    .tag.active{background:var(--secondary);color:#fff;border-color:var(--secondary)}
-    .range{display:flex;gap:8px}
-
-    /* Grid */
-    #routes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-    @media(max-width:1100px){ #routes-grid{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:680px){ #routes-grid{grid-template-columns:1fr}}
-    .card{background:#fff;border:1px solid #e6eef8;border-radius:18px;overflow:hidden;box-shadow:var(--s-s);display:flex;flex-direction:column}
-    .card img{width:100%;aspect-ratio:16/10;object-fit:cover}
-    .card .info{padding:12px}
-    .card .title{margin:0 0 6px}
-    .card .meta{display:flex;flex-wrap:wrap;gap:8px;color:#64748b}
-    .card .actions{display:flex;gap:8px;margin-top:10px}
-    .cover-link{display:block;line-height:0}
-
-    /* Admin quick tools (card) */
+  <style>
+    :root{ --ink:#0B1220; --panel:#fff; --muted:#64748b; --ring:#B5CEF5; --secondary:#2E6D9C; }
+    html,body{font-family:'Poppins',system-ui,sans-serif;background:#f7fbff;color:var(--ink);margin:0}
+    .container{max-width:1200px;margin:0 auto;padding:16px}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    @media(max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:680px){.grid{grid-template-columns:1fr}}
+    .card{background:#fff;border:1px solid #e6eef8;border-radius:14px;overflow:hidden;box-shadow:0 6px 18px rgba(2,6,23,.06)}
+    .card .cover{position:relative}
+    .card img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover}
     .adm-tools{position:absolute;inset:auto 8px 8px auto;display:flex;gap:6px}
-    .adm-btn{background:#fff;border:1px solid #e6eef8;border-radius:10px;padding:.35rem .55rem;box-shadow:var(--s-s)}
-
+    .adm-btn{background:#fff;border:1px solid #e6eef8;border-radius:10px;padding:.35rem .55rem;box-shadow:0 4px 12px rgba(2,6,23,.06)}
+    .info{padding:12px}
+    .muted{color:var(--muted)}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:.55rem .9rem;border-radius:999px;border:1px solid #e6eef8;background:#fff;color:var(--ink);text-decoration:none}
+    .btn.primary{background:var(--secondary);color:#fff;border-color:var(--secondary)}
+    .toolbar{display:flex;justify-content:space-between;align-items:center;margin:8px 0 16px;gap:12px}
+    input.input, select.select, textarea.input{width:100%;border:1px solid #e6eef8;border-radius:12px;padding:10px 12px;font:inherit}
+    input.input:focus, select.select:focus, textarea.input:focus{outline:2px solid var(--ring)}
+    /* Toggle slider */
+    .toggle{display:inline-flex;align-items:center;gap:8px}
+    .switch{position:relative;display:inline-block;width:42px;height:24px}
+    .switch input{display:none}
+    .slider{position:absolute;cursor:pointer;inset:0;background:#d1d5db;border-radius:999px;transition:.2s}
+    .slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s}
+    input:checked + .slider{background:#22c55e}
+    input:checked + .slider:before{transform:translateX(18px)}
     /* Admin drawer */
-    .admin-fab{position:fixed;right:16px;bottom:16px;z-index:90}
-    .admin-panel{position:fixed;right:0;top:0;bottom:0;width:min(92vw,480px);background:#fff;border-left:1px solid #e6eef8;box-shadow:var(--s-l);transform:translateX(100%);transition:.28s;z-index:95;display:flex;flex-direction:column}
+    .admin-panel{position:fixed;right:0;top:0;bottom:0;width:min(92vw,480px);background:#fff;border-left:1px solid #e6eef8;box-shadow:0 20px 50px rgba(46,109,156,.22);transform:translateX(100%);transition:.28s;z-index:90;display:flex;flex-direction:column}
     .admin-panel.active{transform:translateX(0)}
-    .admin-head{position:sticky;top:0;background:#fff;border-bottom:1px solid #e6eef8;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+    .admin-head{padding:12px 16px;border-bottom:1px solid #e6eef8;display:flex;align-items:center;justify-content:space-between}
     .admin-body{padding:14px 16px;display:grid;gap:12px;overflow:auto}
-
-    /* Pager */
-    .pager{display:flex;gap:12px;align-items:center;justify-content:center;margin:18px 0}
-    .pager .current{color:#64748b}
-    .searchbar{display:flex;align-items:center;gap:8px;flex:1}
-.searchbar .input{min-width:clamp(160px,28vw,360px)}
-@media (max-width:700px){
-  .toolbar{flex-direction:column;align-items:stretch}
-  .toolbar-actions{width:100%;justify-content:space-between}
-  .searchbar{width:100%}
-  .searchbar .input{flex:1;min-width:0}
-}
-/* не даём Jinja споткнуться на "{ #": всегда пробел после "{" перед #id */
-@media (max-width:1100px) { #routes-grid { grid-template-columns: repeat(2,1fr); } }
-@media (max-width:680px)  { #routes-grid { grid-template-columns: 1fr; } }
-  /* ==== Burger/Sidebar from index ==== */
-.mobile-header{position:sticky; top:0; inset-inline:0; height:64px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; background:rgba(255,255,255,.9); backdrop-filter: blur(10px); z-index:50; border-bottom:1px solid rgba(2,6,23,.06)}
-.sidebar{position:fixed; top:0; left:0; height:100vh; width:320px; background:#fff; box-shadow:0 12px 40px rgba(2,6,23,.08); transform:translateX(-100%); transition:.3s transform; z-index:60; overflow:auto}
-.sidebar.mobile-active{transform:translateX(0)}
-.menu-overlay{position:fixed; inset:0; background:rgba(15,23,42,.28); opacity:0; visibility:hidden; transition:.25s; z-index:55}
-.menu-overlay.active{opacity:1; visibility:visible}
-</style>
+  </style>
 </head>
 <body>
-
-<header>
-  <div class="mobile-header">
-    <div class="burger-menu" id="burger-menu"><span></span><span></span><span></span></div>
-    <div class="flex items-center gap-3">
-      <img class="mobile-logo h-8" src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" />
-      <span class="font-bold text-[color:var(--secondary)] hidden sm:block">Almaways</span>
-    </div>
-    <div class="hidden sm:flex items-center gap-2">
-      <a href="/index" class="py-2 px-3 rounded-full bg-[color:var(--secondary)] text-white text-sm font-semibold">На главную</a>
-      <a href="/favourites" class="py-2 px-3 rounded-full bg-[color:var(--secondary)] text-white text-sm font-semibold">Избранное</a>
-    </div>
-  </div>
-</header>
-<aside class="sidebar" id="sidebar">
-  <nav class="menu">
-    <a href="/index"><i class="fas fa-home"></i>Главная</a>
-    <a href="/cul/cultural_routes" class="active"><i class="fas fa-route"></i>Культурные маршруты</a>
-    <a href="/favourites"><i class="fas fa-heart"></i>Избранное</a>
-    <a href="/user_office"><i class="fas fa-user"></i>Личный кабинет</a>
-    <a href="/logout"><i class="fas fa-sign-out-alt"></i>Выход</a>
-  </nav>
-</aside>
-<div class="menu-overlay" id="menu-overlay"></div>
-
-<main class="container" style="padding:18px 0 28px">
-  <!-- Hero -->
-  <section class="hero">
-    <div class="hero-inner">
-      <div>
-        <h1>Культурные маршруты</h1>
-        <p>Выбирай из лучших подборок: музеи, рынки, архитектура, стрит-арт и гастрономия. Умные фильтры помогут найти идеальный маршрут.</p>
-        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-          <a class="btn" href="/favourites"><i class="fa-solid fa-heart"></i> Избранное</a>
-          <a class="btn ghost" href="/index#choose"><i class="fa-solid fa-compass"></i> Обзор</a>
-        </div>
-      </div>
-      <div class="hero-art">
-        <img src="{{ url_for('static', filename='img/culture_hero.jpg') }}" alt="Almaways Culture" onerror="this.style.display='none'">
+  <main class="container">
+    <div class="toolbar">
+      <h1 style="margin:0">Культурные маршруты</h1>
+      <div style="display:flex;gap:8px">
+        <a href="/index" class="btn">На главную</a>
         {% if current_user.is_authenticated and current_user.is_admin %}
-          <div class="hero-badges"><span class="chip">Админ-режим</span></div>
+          <button class="btn primary" id="adm_open"><i class="fa-solid fa-wand-magic-sparkles"></i> Админ-панель</button>
         {% endif %}
       </div>
     </div>
-  </section>
 
-  <!-- Toolbar -->
-  <div class="toolbar">
-  <h2 style="margin:0">Подборка</h2>
-  <div class="toolbar-actions">
-    <div class="searchbar">
-      <input id="q_top" class="input" type="search"
-             placeholder="Название, описание…"
-             value="{{ request.args.get('q','') }}" autocomplete="off">
+    <div class="toolbar">
+      <input id="q_top" class="input" placeholder="Поиск по названию/описанию">
+      <select id="f_sort" class="select">
+        <option value="popular">Популярное</option>
+        <option value="new">Сначала новые</option>
+      </select>
     </div>
 
-    <button id="open-filters" class="btn ghost" type="button">
-      <i class="fa-solid fa-sliders"></i> Фильтры
-    </button>
-
-    <select id="f_sort" class="select" aria-label="Сортировка">
-      {% set s = request.args.get('sort','popular') %}
-      <option value="popular" {{ 'selected' if s=='popular' else '' }}>Сначала популярные</option>
-      <option value="rating"  {{ 'selected' if s=='rating' else '' }}>По рейтингу</option>
-      <option value="new"     {{ 'selected' if s=='new' else '' }}>Сначала новые</option>
-      <option value="length_asc"  {{ 'selected' if s=='length_asc' else '' }}>По длине (короче →)</option>
-      <option value="length_desc" {{ 'selected' if s=='length_desc' else '' }}>По длине (длиннее →)</option>
-    </select>
-  </div>
-</div>
-
-
-
-  <!-- FILTER DRAWER -->
-  <div id="filters-overlay" class="filters-overlay" hidden></div>
-  <aside id="filters-drawer" class="filters-drawer" aria-hidden="true" aria-labelledby="filters-title">
-    <div class="filters-head">
-      <h3 id="filters-title" style="margin:0">Фильтры</h3>
-      <button id="close-filters" class="btn ghost" type="button">Закрыть</button>
-    </div>
-    <div class="filters-body">
-      
-
-      <div class="block">
-        <span class="lbl">Категории</span>
-        <div id="f_cats" class="tags">
-          {% set ac = request.args.getlist('cat') %}
-          {% for c in (categories or []) %}
-            <button type="button" class="tag {{ 'active' if c in ac else '' }}" data-key="cat" data-val="{{ c }}">{{ c }}</button>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div class="block">
-        <span class="lbl">Сложность</span>
-        <div id="f_diff" class="tags">
-          {% set ad = request.args.getlist('diff') %}
-          {% for d in ['easy','medium','hard'] %}
-            <button type="button" class="tag {{ 'active' if d in ad else '' }}" data-key="diff" data-val="{{ d }}">{{ d }}</button>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div class="block two">
-        <label>
-          <span class="lbl">Длительность, ч (от–до)</span>
-          <div class="range">
-            <input id="f_dmin" type="number" min="0" step="0.5" class="input" placeholder="от" value="{{ request.args.get('dmin','') }}" />
-            <input id="f_dmax" type="number" min="0" step="0.5" class="input" placeholder="до" value="{{ request.args.get('dmax','') }}" />
-          </div>
-        </label>
-        <label>
-          <span class="lbl">Длина, км (от–до)</span>
-          <div class="range">
-            <input id="f_lmin" type="number" min="0" step="0.1" class="input" placeholder="от" value="{{ request.args.get('lmin','') }}" />
-            <input id="f_lmax" type="number" min="0" step="0.1" class="input" placeholder="до" value="{{ request.args.get('lmax','') }}" />
-          </div>
-        </label>
-      </div>
-
-      <label class="block">
-        <span class="lbl">Рейтинг ≥</span>
-        <input id="f_rmin" type="number" min="0" max="5" step="0.1" class="input" placeholder="0–5" value="{{ request.args.get('rmin','') }}" />
-      </label>
-    </div>
-    <div class="filters-foot">
-      <button id="f_reset" class="btn ghost" type="button">Сброс</button>
-      <button id="f_apply" class="btn" type="button"><i class="fa-solid fa-filter"></i> Применить</button>
-    </div>
-  </aside>
-
-  <!-- GRID -->
-  <section id="routes-grid">
-    {% if routes and routes|length %}
+    <section id="routes-grid" class="grid">
       {% for r in routes %}
         <article class="card" data-id="{{ r.id }}">
-          <div style="position:relative">
-            <a href="{{ url_for('cul_dynamic', route_id=r.id) }}" class="cover-link" aria-label="Открыть {{ r.title or r.name }}">
-              <img loading="lazy" src="{{ r.image_url or r.img or url_for('static', filename='img/placeholder.jpg') }}" alt="{{ r.title or r.name }}"/>
+          <div class="cover">
+            <a href="{{ url_for('cul.cul_dynamic', route_id=r.id) }}">
+              <img src="{{ r.image_url or url_for('static', filename='img/placeholder.jpg') }}" alt="{{ r.title }}">
             </a>
             {% if current_user.is_authenticated and current_user.is_admin %}
               <div class="adm-tools">
                 <button class="adm-btn" data-adm="edit" data-id="{{ r.id }}" title="Редактировать"><i class="fa-regular fa-pen-to-square"></i></button>
-                <button class="adm-btn" data-adm="publish" data-id="{{ r.id }}" title="Вкл/выкл публикацию"><i class="fa-solid fa-toggle-on"></i></button>
+                <!-- Toggle slider -->
+                <label class="toggle adm-btn" title="Вкл/выкл публикацию">
+                  <span class="muted" style="font-size:.85rem">Visible</span>
+                  <span class="switch">
+                    <input type="checkbox" data-adm="publish" data-id="{{ r.id }}" {% if r.is_published %}checked{% endif %}>
+                    <span class="slider"></span>
+                  </span>
+                </label>
                 <button class="adm-btn" data-adm="delete" data-id="{{ r.id }}" title="Удалить"><i class="fa-regular fa-trash-can"></i></button>
               </div>
             {% endif %}
           </div>
           <div class="info">
-            <h3 class="title">{{ r.title or r.name }}</h3>
-            <div class="meta">
-              <span>★ {{ r.rating if r.rating is defined else (r.popularity if r.popularity is defined else 0) }}</span>
-              {% if r.category is defined and r.category %}<span>#{{ r.category }}</span>{% endif %}
-              {% if r.difficulty is defined and r.difficulty %}<span>{{ r.difficulty }}</span>{% endif %}
-              {% if r.duration is defined and r.duration %}<span><i class="fa-regular fa-clock"></i> {{ r.duration }}</span>{% endif %}
-              {% if r.length_km is defined and r.length_km %}<span><i class="fa-solid fa-person-hiking"></i> {{ r.length_km }} км</span>{% endif %}
-            </div>
-            {% if r.short_description is defined and r.short_description %}
-              <p style="margin:8px 0 0;color:#64748b">{{ r.short_description }}</p>
-            {% endif %}
-            <div class="actions">
-              <a href="{{ url_for('cul_dynamic', route_id=r.id) }}" class="btn ghost">Открыть</a>
-              <a id = "cul_{{route_id}}_fav" class="btn" aria-label="Добавить в избранное"><i class="fa-regular fa-bookmark"></i></a>
-            </div>
+            <h3 style="margin:0 0 6px">{{ r.title }}</h3>
+            {% if r.short_description %}<p class="muted" style="margin:6px 0 0">{{ r.short_description }}</p>{% endif %}
           </div>
         </article>
       {% endfor %}
-    {% else %}
-      {% for _ in range(6) %}
-        <article class="card">
-          <div class="info">
-            <h3 class="title">Маршрутов не найдено</h3>
-            <p style="color:#64748b">Измени фильтры (кнопка «Фильтры») и попробуй ещё раз.</p>
-          </div>
-        </article>
-      {% endfor %}
-    {% endif %}
-  </section>
+    </section>
+  </main>
 
-  <!-- PAGINATION -->
-  {% if page is defined and pages is defined and pages > 1 %}
-  <nav class="pager" aria-label="Пагинация">
-    {% set prev = page-1 %}{% set next = page+1 %}
-    {% if prev >= 1 %}
-      <a href="#" class="pager-link" data-page="{{ prev }}">Назад</a>
-    {% else %}
-      <span>Назад</span>
-    {% endif %}
-    <span class="current">{{ page }} / {{ pages }}</span>
-    {% if next <= pages %}
-      <a href="#" class="pager-link" data-page="{{ next }}">Вперёд</a>
-    {% else %}
-      <span>Вперёд</span>
-    {% endif %}
-  </nav>
+  {% if current_user.is_authenticated and current_user.is_admin %}
+  <aside id="adm_panel" class="admin-panel" aria-label="Админ-панель">
+    <div class="admin-head">
+      <strong>Редактор маршрута</strong>
+      <button id="adm_close" class="btn">Закрыть</button>
+    </div>
+    <div class="admin-body">
+      <form id="adm_form" enctype="multipart/form-data">
+        <input type="hidden" name="id" id="adm_id"/>
+        <label>
+          <div class="muted">Название</div>
+          <input class="input" name="title" id="adm_title" required>
+        </label>
+        <label>
+          <div class="muted">Краткое описание</div>
+          <textarea class="input" name="short_description" rows="3" id="adm_desc"></textarea>
+        </label>
+        <label>
+          <div class="muted">Полное описание</div>
+          <textarea class="input" name="description" rows="4" id="adm_descr_full"></textarea>
+        </label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <label>
+            <div class="muted">Длительность (ч)</div>
+            <input class="input" name="duration" type="number" step="0.5" min="0" id="adm_duration">
+          </label>
+          <label>
+            <div class="muted">Сложность</div>
+            <select class="select" name="difficulty" id="adm_difficulty">
+              <option value="">—</option><option>Легкая</option><option>Средняя</option><option>Сложная</option>
+            </select>
+          </label>
+        </div>
+        <label>
+          <div class="muted">Обложка (png/jpg/webp)</div>
+          <input class="input" name="image" type="file" accept="image/png, image/jpeg, image/webp" id="adm_image">
+        </label>
+
+        <!-- Отдельный слайдер публикации внутри формы (моментально шлет toggle) -->
+        <div class="toggle" style="margin-top:6px">
+          <span class="muted" style="font-size:.95rem">Опубликован</span>
+          <label class="switch">
+            <input type="checkbox" id="adm_published">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button id="adm_new" class="btn" type="button">Новый</button>
+          <button id="adm_save" class="btn primary" type="submit"><i class="fa-regular fa-floppy-disk"></i> Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </aside>
   {% endif %}
 
-</main>
+  <script>
+    // Минимальный клиент для подгрузки JSON витрины
+    (function(){
+      const API = "/cul/cultural_routes_json";
+      const grid = document.getElementById('routes-grid');
+      const qTop = document.getElementById('q_top');
+      const sort = document.getElementById('f_sort');
 
-{% if current_user.is_authenticated and current_user.is_admin %}
-<!-- ADMIN FAB + PANEL -->
-<div class="admin-fab"><button id="adm_open" class="btn"><i class="fa-solid fa-wand-magic-sparkles"></i> Админ-панель</button></div>
-<aside id="adm_panel" class="admin-panel" aria-label="Админ-панель">
-  <div class="admin-head">
-    <strong>Редактор маршрута</strong>
-    <button id="adm_close" class="btn ghost" type="button">Закрыть</button>
-  </div>
-  <div class="admin-body">
-    <form id="adm_form" enctype="multipart/form-data">
-      <input type="hidden" name="id" id="adm_id"/>
-      <label class="block">
-        <span class="lbl">Название</span>
-        <input class="input" name="title" id="adm_title" required>
-      </label>
+      function esc(s){ return String(s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
 
-      <div class="block two">
-        <label>
-          <span class="lbl">Категория</span>
-          <input class="input" name="category" list="cats_list" id="adm_category">
-        </label>
-        <label>
-          <span class="lbl">Сложность</span>
-          <select class="select" name="difficulty" id="adm_difficulty">
-            <option value="">—</option><option>easy</option><option>medium</option><option>hard</option>
-          </select>
-        </label>
-      </div>
+      function cardHTML(r, isAdmin){
+        const toggle = isAdmin ? `
+          <label class="toggle adm-btn" title="Вкл/выкл публикацию">
+            <span class="muted" style="font-size:.85rem">Visible</span>
+            <span class="switch">
+              <input type="checkbox" data-adm="publish" data-id="${r.id}" ${r.is_published?'checked':''}>
+              <span class="slider"></span>
+            </span>
+          </label>` : '';
 
-      <div class="block two">
-        <label>
-          <span class="lbl">Длительность (ч)</span>
-          <input class="input" name="duration" type="number" step="0.5" min="0" id="adm_duration">
-        </label>
-        <label>
-          <span class="lbl">Длина (км)</span>
-          <input class="input" name="length_km" type="number" step="0.1" min="0" id="adm_length">
-        </label>
-      </div>
+        const adminBtns = isAdmin ? `
+          <div class="adm-tools">
+            <button class="adm-btn" data-adm="edit" data-id="${r.id}" title="Редактировать"><i class="fa-regular fa-pen-to-square"></i></button>
+            ${toggle}
+            <button class="adm-btn" data-adm="delete" data-id="${r.id}" title="Удалить"><i class="fa-regular fa-trash-can"></i></button>
+          </div>` : '';
 
-      <label class="block">
-        <span class="lbl">Рейтинг (0–5)</span>
-        <input class="input" name="rating" type="number" step="0.1" min="0" max="5" id="adm_rating">
-      </label>
-
-      <label class="block">
-        <span class="lbl">Короткое описание</span>
-        <textarea class="input" name="short_description" rows="3" id="adm_desc"></textarea>
-      </label>
-
-      <label class="block">
-        <span class="lbl">Обложка (png/jpg/webp)</span>
-        <input class="input" name="image" type="file" accept="image/png, image/jpeg, image/webp" id="adm_image">
-      </label>
-
-      <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button id="adm_save" class="btn" type="submit"><i class="fa-regular fa-floppy-disk"></i> Сохранить</button>
-        <button id="adm_new" class="btn ghost" type="button">Новый</button>
-      </div>
-    </form>
-    <datalist id="cats_list">
-      {% for c in (categories or []) %}
-        <option value="{{ c }}"></option>
-      {% endfor %}
-    </datalist>
-  </div>
-</aside>
-{% endif %}
-
-<script>
-(function(){
-  // ---- ЕДИНЫЙ AJAX ДЛЯ ПОИСКА/ФИЛЬТРОВ/ПАГИНАЦИИ ----
-  var API = "{{ url_for('cultural_routes_json') }}"; // <-- правильный JSON-роут
-
-  var grid = document.getElementById('routes-grid');
-  var qTop = document.getElementById('q_top');
-  var sort = document.getElementById('f_sort');
-  var dmin = document.getElementById('f_dmin'), dmax = document.getElementById('f_dmax');
-  var lmin = document.getElementById('f_lmin'), lmax = document.getElementById('f_lmax');
-  var rmin = document.getElementById('f_rmin');
-  var cats = document.getElementById('f_cats');
-  var diff = document.getElementById('f_diff');
-
-  function activeTags(container){
-    if(!container) return [];
-    var out=[], tags=container.querySelectorAll('.tag.active');
-    for(var i=0;i<tags.length;i++) out.push(tags[i].getAttribute('data-val'));
-    return out;
-  }
-  function buildParams(extra){
-    var p = new URLSearchParams();
-    var qv = qTop && qTop.value ? qTop.value.trim() : '';
-    if(qv) p.set('q', qv);
-    if(sort && sort.value) p.set('sort', sort.value);
-
-    var ac = activeTags(cats); for(var i=0;i<ac.length;i++) p.append('cat', ac[i]);
-    var ad = activeTags(diff); for(var j=0;j<ad.length;j++) p.append('diff', ad[j]);
-
-    if(dmin && dmin.value) p.set('dmin', dmin.value);
-    if(dmax && dmax.value) p.set('dmax', dmax.value);
-    if(lmin && lmin.value) p.set('lmin', lmin.value);
-    if(lmax && lmax.value) p.set('lmax', lmax.value);
-    if(rmin && rmin.value) p.set('rmin', rmin.value);
-
-    if(extra){
-      for(var k in extra) if(Object.prototype.hasOwnProperty.call(extra,k)) p.set(k, extra[k]);
-    }
-    return p;
-  }
-  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
-  function cardHTML(r, isAdmin){
-    var img = r.image_url || "{{ url_for('static', filename='img/placeholder.jpg') }}";
-    var title = esc(r.title);
-    var desc = r.short_description ? '<p style="margin:8px 0 0;color:#64748b">'+esc(r.short_description)+'</p>' : '';
-    var cat  = r.category ? '<span>#'+esc(r.category)+'</span>' : '';
-    var dif  = r.difficulty ? '<span>'+esc(r.difficulty)+'</span>' : '';
-    var dur  = r.duration ? '<span><i class="fa-regular fa-clock"></i> '+esc(r.duration)+'</span>' : '';
-    var len  = (r.length_km || r.length_km===0) ? '<span><i class="fa-solid fa-person-hiking"></i> '+esc(r.length_km)+' км</span>' : '';
-    var rating = (r.rating != null) ? r.rating : 0;
-    var adm  = isAdmin ? (
-      '<div class="adm-tools">'+
-      ' <button class="adm-btn" data-adm="edit" data-id="'+r.id+'" title="Редактировать"><i class="fa-regular fa-pen-to-square"></i></button>'+
-      ' <button class="adm-btn" data-adm="publish" data-id="'+r.id+'" title="Вкл/выкл публикацию"><i class="fa-solid fa-toggle-on"></i></button>'+
-      ' <button class="adm-btn" data-adm="delete" data-id="'+r.id+'" title="Удалить"><i class="fa-regular fa-trash-can"></i></button>'+
-      '</div>'
-    ) : '';
-
-    return ''+
-    '<article class="card" data-id="'+r.id+'">'+
-      '<div style="position:relative">'+
-        '<a href="/cul_dynamic/'+r.id+'" class="cover-link" aria-label="Открыть '+title+'">'+
-          '<img loading="lazy" src="'+img+'" alt="'+title+'"/>'+
-        '</a>'+adm+
-      '</div>'+
-      '<div class="info">'+
-        '<h3 class="title">'+title+'</h3>'+
-        '<div class="meta">'+
-          '<span>★ '+rating+'</span>'+cat+dif+dur+len+
-        '</div>'+desc+
-        '<div class="actions">'+
-          '<a href="/cul_dynamic/'+r.id+'" class="btn ghost">Открыть</a>'+
-          '<a href="/add_to_favourites/'+r.id+'" class="btn" aria-label="Добавить в избранное"><i class="fa-regular fa-bookmark"></i></a>'+
-        '</div>'+
-      '</div>'+
-    '</article>';
-  }
-  function renderPager(page, pages){
-    var pager = document.querySelector('.pager');
-    if(!pager){ pager=document.createElement('nav'); pager.className='pager'; grid.after(pager); }
-    var prev = (page>1)? '<a href="#" class="pager-link" data-page="'+(page-1)+'">Назад</a>' : '<span>Назад</span>';
-    var next = (page<pages)? '<a href="#" class="pager-link" data-page="'+(page+1)+'">Вперёд</a>' : '<span>Вперёд</span>';
-    pager.innerHTML = prev+'<span class="current">'+page+' / '+pages+'</span>'+next;
-    var links = pager.querySelectorAll('.pager-link');
-    for(var i=0;i<links.length;i++){
-      links[i].addEventListener('click', function(e){ e.preventDefault(); fetchAndRender({page:this.getAttribute('data-page')}, true); });
-    }
-  }
-  function setLoading(on){ if(grid) grid.style.opacity = on ? '0.6' : ''; }
-
-  function fetchAndRender(extra, push){
-    setLoading(true);
-    var params = buildParams(extra);
-    var url = API + '?' + params.toString();
-    return fetch(url, {credentials:'include'})
-      .then(function(res){
-        var ct = res.headers.get('content-type')||'';
-        if(ct.indexOf('application/json')===-1) throw new Error('Не JSON');
-        return res.json();
-      })
-      .then(function(data){
-        var html='', items=(data&&data.items)||[];
-        if(items.length){
-          for(var i=0;i<items.length;i++){ html += cardHTML(items[i], !!data.is_admin); }
-        }else{
-          for(var j=0;j<6;j++){
-            html += '<article class="card"><div class="info"><h3 class="title">Маршрутов не найдено</h3><p style="color:#64748b">Измени фильтры и попробуй ещё раз.</p></div></article>';
-          }
-        }
-        grid.innerHTML = html;
-        renderPager(data.page||1, data.pages||1);
-
-        if(push){
-          var full = window.location.pathname + '?' + params.toString();
-          try{ history.pushState({q:params.toString()},'',full); }catch(_){}
-        }
-        bindAdminQuick();
-      })
-      .catch(function(err){ console.error('AJAX error:', err); })
-      .finally(function(){ setLoading(false); });
-  }
-
-  // --- админ быстрые действия (как было)
-  function bindAdminQuick(){
-    var gridEl=document.getElementById('routes-grid'); if(!gridEl) return;
-    function post(url, fd){
-      return fetch(url,{method:'POST',body:fd,credentials:'include'})
-        .then(function(res){ return res.json().catch(function(){return{};}).then(function(d){return{ok:res.ok,data:d};}); })
-        .then(function(x){ if(!x.ok || !x.data.success) throw new Error(x.data.error||'Ошибка'); return x.data; });
-    }
-    var btns=gridEl.querySelectorAll('.adm-btn');
-    for(var i=0;i<btns.length;i++){
-      btns[i].addEventListener('click', function(e){
-        e.preventDefault(); e.stopPropagation();
-        var id=this.getAttribute('data-id'); var act=this.getAttribute('data-adm'); if(!id) return;
-        if(act==='delete'){
-          if(!confirm('Удалить маршрут #'+id+'?')) return;
-          post('/cul/admin/delete/'+id,new FormData()).then(function(){ fetchAndRender({},false); }).catch(function(err){ alert('Ошибка: '+err.message); });
-        }else if(act==='publish'){
-          post('/cul/admin/toggle_publish/'+id,new FormData()).then(function(){ fetchAndRender({},false); }).catch(function(err){ alert('Ошибка: '+err.message); });
-        }else if(act==='edit'){
-          document.getElementById('adm_panel')?.classList.add('active');
-          var fid=document.getElementById('adm_id'); if(fid) fid.value=id;
-        }
-      });
-    }
-  }
-
-  // ---- Слушатели (без перезагрузки) ----
-  function debounce(fn, delay){ var t; return function(){ var a=arguments,c=this; clearTimeout(t); t=setTimeout(function(){ fn.apply(c,a); }, delay); }; }
-  var debounced = debounce(function(){ fetchAndRender({page:1}, true); }, 350);
-
-  if(qTop){
-    qTop.addEventListener('input', debounced);
-    qTop.addEventListener('change', debounced);
-    qTop.addEventListener('compositionend', debounced);
-    qTop.addEventListener('keydown', function(e){
-      if(e.key==='Enter'){ e.preventDefault(); fetchAndRender({page:1}, true); }
-      if(e.key==='Escape'){ qTop.value=''; fetchAndRender({page:1}, true); }
-    });
-  }
-  if(sort){ sort.addEventListener('change', function(){ fetchAndRender({page:1}, true); }); }
-
-  var applyBtn=document.getElementById('f_apply');
-  if(applyBtn){ applyBtn.addEventListener('click', function(){ fetchAndRender({page:1}, true); }); }
-
-  var resetBtn=document.getElementById('f_reset');
-  if(resetBtn){ resetBtn.addEventListener('click', function(){
-    try{ history.pushState({},'',window.location.pathname); }catch(_){}
-    if(qTop) qTop.value=''; if(dmin) dmin.value=''; if(dmax) dmax.value='';
-    if(lmin) lmin.value=''; if(lmax) lmax.value='';
-    if(rmin) rmin.value='';
-    if(cats){ var t=cats.querySelectorAll('.tag.active'); for(var i=0;i<t.length;i++) t[i].classList.remove('active'); }
-    if(diff){ var d=diff.querySelectorAll('.tag.active'); for(var j=0;j<d.length;j++) d[j].classList.remove('active'); }
-    fetchAndRender({page:1}, true);
-  }); }
-
-  // клики по серверной пагинации (если была отрисована) — тоже перехватываем
-  document.querySelectorAll('.pager-link').forEach(function(a){
-    a.addEventListener('click', function(e){ e.preventDefault(); fetchAndRender({page:this.dataset.page}, true); });
-  });
-
-  // back/forward
-  window.addEventListener('popstate', function(){ fetchAndRender({}, false); });
-})();
-// === INIT missing bindings ===
-document.addEventListener('DOMContentLoaded', function(){
-  // 1) Активируем быстрые админ-кнопки для стартового HTML
-  if (typeof bindAdminQuick === 'function') bindAdminQuick();
-
-  
-  // 2) Бургер/сайдбар (как на index)
-  const burger = document.getElementById('burger-menu');
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('menu-overlay');
-  function toggleSidebar(){
-    burger.classList.toggle('active');
-    sidebar.classList.toggle('mobile-active');
-    overlay.classList.toggle('active');
-    document.body.style.overflow = sidebar.classList.contains('mobile-active') ? 'hidden' : '';
-  }
-  burger?.addEventListener('click', toggleSidebar);
-  overlay?.addEventListener('click', toggleSidebar);
-
-  // 3) Фильтры (дровер) Фильтры (дровер)
-  var fOpen = document.getElementById('open-filters');
-  var fClose = document.getElementById('close-filters');
-  var fDrawer = document.getElementById('filters-drawer');
-  var fOverlay = document.getElementById('filters-overlay');
-  function openFilters(){ fDrawer?.classList.add('active'); fOverlay?.classList.add('active'); fOverlay?.removeAttribute('hidden'); }
-  function closeFilters(){ fDrawer?.classList.remove('active'); fOverlay?.classList.remove('active'); }
-  fOpen?.addEventListener('click', openFilters);
-  fClose?.addEventListener('click', closeFilters);
-  fOverlay?.addEventListener('click', closeFilters);
-
-  // 4) Теги фильтров (#f_cats, #f_diff)
-  function wireTagContainer(id){
-    var box = document.getElementById(id);
-    if(!box) return;
-    box.addEventListener('click', function(e){
-      var b = e.target.closest('.tag'); if(!b) return;
-      b.classList.toggle('active');
-      // перерисовываем с page=1 и пушим URL
-      if (typeof fetchAndRender === 'function') fetchAndRender({page:1}, true);
-    });
-  }
-  wireTagContainer('f_cats');
-  wireTagContainer('f_diff');
-
-  // 5) Админ-панель: открыть/закрыть/новый
-  var admPanel = document.getElementById('adm_panel');
-  var admOpen  = document.getElementById('adm_open');
-  var admClose = document.getElementById('adm_close');
-  var admNew   = document.getElementById('adm_new');
-  var admForm  = document.getElementById('adm_form');
-
-  function openAdm(){ admPanel?.classList.add('active'); }
-  function closeAdm(){ admPanel?.classList.remove('active'); }
-  admOpen?.addEventListener('click', openAdm);
-  admClose?.addEventListener('click', closeAdm);
-
-  admNew?.addEventListener('click', function(){
-    if(!admForm) return;
-    admForm.reset();
-    var id = document.getElementById('adm_id'); if (id) id.value = '';
-  });
-
-  // 6) Сабмит формы (создать/обновить)
-  admForm?.addEventListener('submit', function(e){
-    e.preventDefault();
-    var fd = new FormData(admForm);
-    // если у вас другой URL — поменяйте здесь
-    var url = fd.get('id') ? '/cul/admin/save/'+fd.get('id') : '/cul/admin/create';
-    fetch(url, { method:'POST', body:fd, credentials:'include' })
-      .then(res => res.json().catch(()=>({})).then(data => ({ok:res.ok, data})))
-      .then(({ok,data})=>{
-        if(!ok || !data?.success) throw new Error(data?.error || 'Ошибка сохранения');
-        // обновляем грид и закрываем панель
-        if (typeof fetchAndRender === 'function') fetchAndRender({}, false);
-        closeAdm();
-      })
-      .catch(err=> alert('Ошибка: ' + err.message));
-  });
-});
-
-</script>
-<script>
-// ==== ADMIN: edit / delete + убрать toggle ====
-document.addEventListener('DOMContentLoaded', function () {
-  const grid = document.getElementById('routes-grid');
-  if (!grid) return;
-
-
-  // POST helper
-  async function postJSON(url, fd = new FormData()) {
-    const res  = await fetch(url, { method: 'POST', body: fd, credentials: 'include' });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || data?.success === false) throw new Error(data?.error || 'Ошибка');
-    return data;
-  }
-
-  // 2) Делегирование кликов по кнопкам на карточках
-  grid.addEventListener('click', async (e) => {
-    const btn = e.target.closest('button.adm-btn');
-    if (!btn) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    const id  = btn.dataset.id;
-    const act = btn.dataset.adm;
-    if (!id) return;
-
-    if (act === 'edit') {
-      // открыть админ-панель и подставить ID
-      document.getElementById('adm_panel')?.classList.add('active');
-      const fid = document.getElementById('adm_id');
-      if (fid) fid.value = id;
-      return;
-    }
-
-    if (act === 'delete') {
-      if (!confirm(`Удалить маршрут #${id}?`)) return;
-      try {
-        await postJSON(`/cul/admin/delete/${id}`);
-        // если есть живой ререндер — используем его
-        if (typeof fetchAndRender === 'function') {
-          fetchAndRender({}, false);
-        } else {
-          // иначе просто убираем карточку из DOM
-          (btn.closest('article.card') || btn.closest('[data-id]'))?.remove();
-        }
-      } catch (err) {
-        alert('Ошибка: ' + err.message);
+        return `
+          <article class="card" data-id="${r.id}">
+            <div class="cover">
+              <a href="/cul/${r.id}"><img src="${esc(r.image_url)}" alt="${esc(r.title)}"></a>
+              ${adminBtns}
+            </div>
+            <div class="info">
+              <h3 style="margin:0 0 6px">${esc(r.title)}</h3>
+              ${r.short_description ? `<p class="muted" style="margin:6px 0 0">${esc(r.short_description)}</p>`:''}
+            </div>
+          </article>`;
       }
-      return;
-    }
-  });
-});
-</script>
-<script>
-  
- // Загрузка начального состояния
-  async function loadInitialStateFav() {
-    try {
-        const response = await fetch('/get_current_user_state_fav');
-        const data = await response.json();
-        
-        if (data.favourite_routes) {  // ← исправлено с completed_routes на favourite_routes
-            Object.entries(data.favourite_routes).forEach(([routeId, isFavourite]) => {
-                const button = document.getElementById(routeId);
-                if (button) {
-                    button.textContent = isFavourite ? 'в избранном ' : 'Понравился ';
-                    button.classList.toggle('done', isFavourite);
-                }
-            });
-        }
-    } catch (error) {
-        console.error("Ошибка загрузки состояния:", error);
-    }
-}
-  
-  // Обработчик кликов
-  async function handleRouteClickFav(button) {
-      const routeId = button.id;
-      const isCurrentlyFavourite = button.classList.contains('done');
-      const newState = !isCurrentlyFavourite;
-      
-      try {
-          button.disabled = true;
-          
-          const response = await fetch('/update_route_state_fav', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({
-                  route_id: routeId,
-                  new_state_fav: newState
-              })
-          });
-          
-          const result = await response.json();
-          
-          if (result.status === "success") {
-              button.textContent = newState ? 'в Избраном' : 'Понравился ';
-              button.classList.toggle('done', newState);
-              console.log("Состояние обновлено:", result);
-          }
-      } catch (error) {
-          console.error("Ошибка обновления:", error);
-          // Возвращаем предыдущее состояние при ошибке
-          button.textContent = isCurrentlyFavourite ? 'в Избраном' : 'Понравился ';
-          button.classList.toggle('done', isCurrentlyFavourite);
-      } finally {
-          button.disabled = false;
+
+      async function fetchAndRender(){
+        const p = new URLSearchParams();
+        const q = (qTop?.value||'').trim();
+        if(q) p.set('q', q);
+        if(sort?.value) p.set('sort', sort.value);
+        const res = await fetch(API+'?'+p.toString(), {credentials:'include'});
+        const data = await res.json();
+        grid.innerHTML = (data.items||[]).map(it=>cardHTML(it, !!data.is_admin)).join('') || '<div class="muted">Пусто</div>';
       }
-  }
-  
-  // Инициализация при загрузке страницы
-  document.addEventListener('DOMContentLoaded', () => {
-      loadInitialStateFav();
-      
-      // Назначаем обработчики всем кнопкам
-      document.querySelectorAll('.route-fav-btn').forEach(btn => {
-          btn.onclick = () => handleRouteClickFav(btn);
-      });
-  });
-</script>
+
+      qTop?.addEventListener('input', ()=>fetchAndRender());
+      sort?.addEventListener('change', ()=>fetchAndRender());
+
+      // Первичная отрисовка (если захочешь — оставь SSR как есть)
+      // fetchAndRender();
+    })();
+  </script>
+
+  <script src="{{ url_for('static', filename='js/cul-admin.js') }}"></script>
 </body>
 </html>

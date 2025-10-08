@@ -41,6 +41,10 @@ from werkzeug.utils import secure_filename
 import os, uuid
 import re
 from sqlalchemy import or_, asc, desc, func, and_
+from cul_routes import cul_bp
+
+
+
 
 
 # 1) Загрузить .env до всего остального
@@ -49,6 +53,7 @@ load_dotenv()
 # 2) Создать приложение только один раз
 app = Flask(__name__)
 oauth = OAuth(app)
+app.register_blueprint(cul_bp)
 # 3) Единая конфигурация из переменных окружения
 BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:7010")
 app.config.update(
