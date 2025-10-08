@@ -11,20 +11,20 @@
 
   <form method="POST" enctype="multipart/form-data">
     <label>Название:</label>
-    <input type="text" name="title" value="{{ route.title if route else '' }}" required>
+    <input type="text" name="title" value="{{ (route.title or route.name) if route else '' }}" required>
 
     <label>Краткое описание:</label>
-    <input type="text" name="short_description" value="{{ route.short_description if route else '' }}">
+    <input type="text" name="short_description" value="{{ route.short_description or '' if route else '' }}">
 
     <label>Полное описание:</label>
-    <textarea name="description" rows="5">{{ route.description if route else '' }}</textarea>
+    <textarea name="description" rows="5">{{ route.description or '' if route else '' }}</textarea>
 
     <label>Длительность (часы, число):</label>
-    <input type="number" step="0.5" name="duration" value="{{ route.duration if route else '' }}">
+    <input type="number" step="0.5" name="duration" value="{{ route.duration or route.duration_hours or '' if route else '' }}">
 
     <label>Сложность:</label>
     <select name="difficulty">
-      {% set diff = route.difficulty if route else '' %}
+      {% set diff = route.difficulty or '' if route else '' %}
       <option value="Легкая"  {{ 'selected' if diff=='Легкая'  else '' }}>Легкая</option>
       <option value="Средняя" {{ 'selected' if diff=='Средняя' else '' }}>Средняя</option>
       <option value="Сложная" {{ 'selected' if diff=='Сложная' else '' }}>Сложная</option>
@@ -37,7 +37,7 @@
     {% endif %}
 
     <label>Карта (iframe HTML):</label>
-    <textarea name="map_embed" rows="4">{{ route.map_embed if route else '' }}</textarea>
+    <textarea name="map_embed" rows="4">{{ route.map_embed or '' if route else '' }}</textarea>
 
     <button type="submit">Сохранить</button>
   </form>

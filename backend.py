@@ -91,9 +91,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login_google"
 
-@login_manager.user_loader
-def load_user(user_id):
-    return db_session.create_session().get(User, int(user_id))
+
 
 from flask_login import UserMixin
 
@@ -240,6 +238,13 @@ def cultural_routes_json():
     items = query.limit(per_page).offset((page-1)*per_page).all()
     db_sess.close()
 
+    if not is_admin:
+        query = query.filter(Route.is_published.is_(True))
+
+    
+
+
+
     return jsonify({
         "items": [_serialize_route(r) for r in items],
         "page": page, "pages": pages, "total": total,
@@ -254,115 +259,22 @@ def cultural_routes_json():
 
 
 @app.route("/cultural_routes")
-
 def cultural_routes():
     db_sess = db_session.create_session()
-    M = _cul_model()
-    if M is None:
+    try:
+        query = db_sess.query(Route)
+        if not bool(getattr(current_user, "is_admin", False)):
+            query = query.filter(Route.is_published.is_(True))
+        routes = query.order_by(desc(Route.id)).all()
+        if not bool(getattr(current_user, "is_admin", False)):
+            query = query.filter(Route.is_published.is_(True))
+
+        categories = []  # если поле category появится — можно собрать distinct
+        return render_template("cul/cultural_routes.html", routes=routes, categories=categories)
+    finally:
         db_sess.close()
-        return render_template("cul/cultural_routes.html", routes=[], categories=[], page=1, pages=1, total=0)
-
-    q = request.args.get("q", "").strip()
-    cats = request.args.getlist("cat")
-    diffs = request.args.getlist("diff")
-    dmin = request.args.get("dmin", type=float)
-    dmax = request.args.get("dmax", type=float)
-    lmin = request.args.get("lmin", type=float)
-    lmax = request.args.get("lmax", type=float)
-    rmin = request.args.get("rmin", type=float)
-    sort = request.args.get("sort", "popular")
-    page = max(1, request.args.get("page", 1, type=int))
-    per_page = 12
-
-    query = db_sess.query(M)
-
-    # Поиск по названию/описанию
-    title_col = getattr(M, "title", None) or getattr(M, "name", None)
-    desc_col  = getattr(M, "short_description", None) or getattr(M, "description", None)
-    tokens = _q_tokens(q)
-    if tokens and (title_col or desc_col):
-        per_token = []
-        for t in tokens:
-            fields = []
-            if title_col is not None: fields.append(_like_ci(title_col, t))
-            if desc_col  is not None: fields.append(_like_ci(desc_col,  t))
-            if fields: per_token.append(or_(*fields))  # слово может быть в любом поле
-        if per_token: query = query.filter(and_(*per_token))  # но все слова должны встретиться
 
 
-    # Категории
-    cat_col = getattr(M, "category", None)
-    if cats and cat_col is not None:
-        query = query.filter(cat_col.in_(cats))
-
-    # Сложность
-    diff_col = getattr(M, "difficulty", None)
-    if diffs and diff_col is not None:
-        query = query.filter(diff_col.in_(diffs))
-
-    # Длительность
-    dur_col = getattr(M, "duration_hours", None) or getattr(M, "duration", None)
-    if dur_col is not None:
-        if dmin is not None: query = query.filter(dur_col >= dmin)
-        if dmax is not None: query = query.filter(dur_col <= dmax)
-
-    # Длина
-    len_col = getattr(M, "length_km", None) or getattr(M, "length", None)
-    if len_col is not None:
-        if lmin is not None: query = query.filter(len_col >= lmin)
-        if lmax is not None: query = query.filter(len_col <= lmax)
-
-    # Рейтинг
-    rate_col = getattr(M, "rating", None) or getattr(M, "popularity", None)
-    if rate_col is not None and rmin is not None:
-        query = query.filter(rate_col >= rmin)
-
-    # Только опубликованные (если есть поле)
-    is_pub_col = getattr(M, "is_published", None)
-    if is_pub_col is not None and not (getattr(current_user, "is_admin", False) or getattr(current_user, "role", "") == "admin"):
-        query = query.filter(is_pub_col.is_(True))
-
-    # Сортировка
-    order = None
-    if sort == "rating" and rate_col is not None:
-        order = desc(rate_col)
-    elif sort == "new" and hasattr(M, "id"):
-        order = desc(M.id)
-    elif sort == "length_asc" and len_col is not None:
-        order = asc(len_col)
-    elif sort == "length_desc" and len_col is not None:
-        order = desc(len_col)
-    elif rate_col is not None:
-        order = desc(rate_col)
-    if order is not None:
-        query = query.order_by(order)
-
-    # Пагинация
-    total = query.count()
-    pages = max(1, (total + per_page - 1) // per_page)
-    routes = query.limit(per_page).offset((page-1)*per_page).all()
-
-    # Список категорий
-    categories = []
-    if cat_col is not None:
-        categories = [c[0] for c in db_sess.query(cat_col).filter(cat_col.isnot(None)).distinct().order_by(cat_col.asc()).all()]
-
-    db_sess.close()
-
-    return render_template(
-        "cul/cultural_routes.html",
-        routes=routes,
-        categories=categories,
-        page=page, pages=pages, total=total
-    )
-
-
-def _cul_model():
-    for name in ("CulturalRoute", "CulRoute", "CultureRoute", "Route"):
-        m = globals().get(name)
-        if m is not None:
-            return m
-    return None
 
 def _string_contains(col, value):
     value = str(value)[:100]
@@ -392,136 +304,159 @@ def _require_admin():
 @app.route("/cul/admin/create", methods=["POST"])
 @login_required
 def cul_admin_create():
-    if not _require_admin():
+    if not getattr(current_user, "is_admin", False):
         return jsonify({"success": False, "error": "forbidden"}), 403
     db_sess = db_session.create_session()
-    M = _cul_model()
-    if M is None:
+    try:
+        r = Route(
+            title=(request.form.get("title") or "").strip(),
+            short_description=request.form.get("short_description") or "",
+            description=request.form.get("description") or "",
+            duration=(float(request.form.get("duration")) if request.form.get("duration") else None),
+            difficulty=request.form.get("difficulty") or "",
+            is_published=True,
+        )
+        # картинка (по желанию: secure_filename и своя папка)
+        img = request.files.get("image")
+        if img and img.filename:
+            os.makedirs(os.path.join(app.static_folder, "uploads"), exist_ok=True)
+            path = os.path.join(app.static_folder, "uploads", img.filename)
+            img.save(path)
+            r.image_url = img.filename
+
+        db_sess.add(r)
+        db_sess.flush()
+        r.route_key = f"route_cul_{r.id}"
+        db_sess.commit()
+        return jsonify({"success": True, "id": r.id})
+    except Exception as e:
+        db_sess.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
         db_sess.close()
-        return jsonify({"success": False, "error": "model not found"}), 500
-
-    m = M()
-    m.title = (request.form.get("title") or "").strip()
-    if hasattr(M, "name") and not getattr(m, "title", None):
-        m.name = (request.form.get("title") or "").strip()
-    if hasattr(M, "category"): m.category = request.form.get("category") or None
-    if hasattr(M, "difficulty"): m.difficulty = request.form.get("difficulty") or None
-    if hasattr(M, "duration_hours"): m.duration_hours = request.form.get("duration") or None
-    elif hasattr(M, "duration"):     m.duration       = request.form.get("duration") or None
-    if hasattr(M, "length_km"): m.length_km = request.form.get("length_km") or None
-    elif hasattr(M, "length"):  m.length    = request.form.get("length_km") or None
-    if hasattr(M, "rating"):    m.rating    = request.form.get("rating") or None
-    elif hasattr(M, "popularity"): m.popularity = request.form.get("rating") or None
-    if hasattr(M, "short_description"):
-        m.short_description = request.form.get("short_description") or None
-    if hasattr(M, "is_published"): m.is_published = True
-
-    img_url = _save_image(request.files.get("image"), "img")
-    if img_url:
-        if hasattr(M, "image_url"): m.image_url = img_url
-        elif hasattr(M, "img"):     m.img       = img_url
-        elif hasattr(M, "image"):   m.image     = img_url
-
-    db_sess.add(m)
-    db_sess.commit()
-    db_sess.close()
-    return jsonify({"success": True})
 
 @app.route("/cul/admin/update/<int:rid>", methods=["POST"])
 @login_required
 def cul_admin_update(rid):
-    if not _require_admin():
+    if not getattr(current_user, "is_admin", False):
         return jsonify({"success": False, "error": "forbidden"}), 403
     db_sess = db_session.create_session()
-    M = _cul_model()
-    if M is None:
+    try:
+        obj = db_sess.get(Route, rid)
+        if not obj:
+            return jsonify({"success": False, "error": "not found"}), 404
+
+        def set_if_nonempty(attr, form_key, conv=None):
+            if form_key in request.form:
+                v = request.form.get(form_key)
+                if v is not None and v != "":
+                    obj.__setattr__(attr, conv(v) if conv else v)
+
+        set_if_nonempty("title", "title", str)
+        set_if_nonempty("short_description", "short_description", str)
+        set_if_nonempty("description", "description", str)
+        set_if_nonempty("difficulty", "difficulty", str)
+        set_if_nonempty("duration", "duration", float)
+
+        # необязательные поля, если появятся
+        if "length_km" in request.form and request.form.get("length_km") != "":
+            try: obj.length_km = float(request.form.get("length_km"))
+            except: pass
+        if "rating" in request.form and request.form.get("rating") != "":
+            try: obj.rating = float(request.form.get("rating"))
+            except: pass
+        if "category" in request.form:
+            v = (request.form.get("category") or "").strip()
+            if v != "":
+                obj.category = v
+
+        # картинка
+        img = request.files.get("image")
+        if img and img.filename:
+            os.makedirs(os.path.join(app.static_folder, "uploads"), exist_ok=True)
+            path = os.path.join(app.static_folder, "uploads", img.filename)
+            img.save(path)
+            obj.image_url = img.filename
+
+        db_sess.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db_sess.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
         db_sess.close()
-        return jsonify({"success": False, "error": "model not found"}), 500
-    obj = db_sess.get(M, rid)
-    if not obj:
+
+
+@app.route("/cul/admin/get/<int:rid>", methods=["GET"])
+@login_required
+def cul_admin_get(rid):
+    if not getattr(current_user, "is_admin", False):
+        return jsonify({"success": False, "error": "forbidden"}), 403
+    db_sess = db_session.create_session()
+    try:
+        obj = db_sess.get(Route, rid)
+        if not obj:
+            return jsonify({"success": False, "error": "not found"}), 404
+        data = {
+            "id": obj.id,
+            "title": obj.title,
+            "short_description": obj.short_description,
+            "difficulty": obj.difficulty,
+            "duration": obj.duration,
+            "length_km": getattr(obj, "length_km", None),
+            "rating": getattr(obj, "rating", None),
+            "category": getattr(obj, "category", None),
+            "image_url": obj.image_url,
+            "is_published": obj.is_published,
+        }
+        return jsonify({"success": True, "data": data})
+    finally:
         db_sess.close()
-        return jsonify({"success": False, "error": "not found"}), 404
 
-    title = (request.form.get("title") or "").strip()
-    if title:
-        if hasattr(obj, "title"): obj.title = title
-        elif hasattr(obj, "name"): obj.name = title
-    for fld, key in (("category","category"),("difficulty","difficulty")):
-        if hasattr(obj, fld): setattr(obj, fld, request.form.get(key) or None)
-
-    v = request.form.get("duration")
-    if hasattr(obj, "duration_hours") and v is not None: obj.duration_hours = v or obj.duration_hours
-    elif hasattr(obj, "duration") and v is not None:     obj.duration       = v or obj.duration
-
-    v = request.form.get("length_km")
-    if hasattr(obj, "length_km") and v is not None: obj.length_km = v or obj.length_km
-    elif hasattr(obj, "length") and v is not None:  obj.length    = v or obj.length
-
-    v = request.form.get("rating")
-    if hasattr(obj, "rating") and v is not None:     obj.rating    = v or obj.rating
-    elif hasattr(obj, "popularity") and v is not None: obj.popularity = v or obj.popularity
-
-    v = request.form.get("short_description")
-    if hasattr(obj, "short_description") and v is not None:
-        obj.short_description = v
-
-    img_url = _save_image(request.files.get("image"), "img")
-    if img_url:
-        if hasattr(obj, "image_url"): obj.image_url = img_url
-        elif hasattr(obj, "img"):     obj.img       = img_url
-        elif hasattr(obj, "image"):   obj.image     = img_url
-
-    db_sess.commit()
-    db_sess.close()
-    return jsonify({"success": True})
 
 @app.route("/cul/admin/delete/<int:rid>", methods=["POST"])
 @login_required
 def cul_admin_delete(rid):
-    if not _require_admin():
+    if not getattr(current_user, "is_admin", False):
         return jsonify({"success": False, "error": "forbidden"}), 403
     db_sess = db_session.create_session()
-    M = _cul_model()
-    if M is None:
+    try:
+        obj = db_sess.get(Route, rid)
+        if not obj:
+            return jsonify({"success": False, "error": "not found"}), 404
+        db_sess.delete(obj)
+        db_sess.commit()
+        return jsonify({"success": True})
+    finally:
         db_sess.close()
-        return jsonify({"success": False, "error": "model not found"}), 500
-    obj = db_sess.get(M, rid)
-    if not obj:
-        db_sess.close()
-        return jsonify({"success": False, "error": "not found"}), 404
-    db_sess.delete(obj)
-    db_sess.commit()
-    db_sess.close()
-    return jsonify({"success": True})
 
+# после создания app и login_manager.init_app(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login_google"  # или твой логин-роут
 
-
-@app.route('/cul_dynamic/<int:route_id>')
-def cul_dynamic_alias(route_id):
-    return cul_dynamic(route_id)   # переиспользуем основной хендлер /cul/<id>
-
+@login_manager.user_loader  
+def load_user(user_id: str):
+    # ВАЖНО: возвращаем пользователя по ID через Session.get (SQLAlchemy 2.x)
+    return db_session.create_session().get(User, int(user_id))
 
 
 
 @app.route("/cul/admin/toggle_publish/<int:rid>", methods=["POST"])
 @login_required
 def cul_admin_toggle_publish(rid):
-    if not _require_admin():
+    if not getattr(current_user, "is_admin", False):
         return jsonify({"success": False, "error": "forbidden"}), 403
     db_sess = db_session.create_session()
-    M = _cul_model()
-    if M is None or not hasattr(M, "is_published"):
+    try:
+        obj = db_sess.get(Route, rid)
+        if not obj:
+            return jsonify({"success": False, "error": "not found"}), 404
+        obj.is_published = not bool(obj.is_published)
+        db_sess.commit()
+        return jsonify({"success": True, "is_published": obj.is_published})
+    finally:
         db_sess.close()
-        return jsonify({"success": False, "error": "not supported"}), 400
-    obj = db_sess.get(M, rid)
-    if not obj:
-        db_sess.close()
-        return jsonify({"success": False, "error": "not found"}), 404
-    obj.is_published = not bool(getattr(obj, "is_published") or False)
-    db_sess.commit()
-    db_sess.close()
-    return jsonify({"success": True})
-
 
 
 
@@ -529,7 +464,7 @@ def cul_admin_toggle_publish(rid):
 @app.route('/cul/<int:route_id>')
 def cul_dynamic(route_id):
     db_sess = db_session.create_session()
-    route = db_sess.query(Route).get(route_id)
+    route = db_sess.get(Route, route_id)
     db_sess.close()
     if not route:
         # если нет в БД — 404 или верни старую статичную страницу при совпадении
@@ -609,7 +544,7 @@ def api_popular_routes():
 def get_current_user_state():
     db_sess = db_session.create_session()
     try:
-        user = db_sess.query(User).get(current_user.id)
+        user = db_sess.get(User, current_user.id)
         return jsonify({
             "completed_routes": user.completed_routes if user.completed_routes else {},
             "progress": user.progress if user.progress else 0
@@ -706,7 +641,7 @@ def route_page(route_id):
 def get_current_user_state_fav():
     db_sess = db_session.create_session()
     try:
-        user = db_sess.query(User).get(current_user.id)
+        user = db_sess.get(User, current_user.id)   
         return jsonify({
             "favourite_routes": user.favourite_routes if user.favourite_routes else {}
         })
@@ -745,7 +680,6 @@ def get_routes():
     route_ids = request.args.get('ids', '').split(',')
     route_ids = [rid for rid in route_ids if rid]
     db_sess = db_session.create_session()
-    user = db_sess.query(User).get(current_user.id)
     routes = []
     for rid in route_ids:
         route = get_route_by_id(rid)
@@ -888,9 +822,6 @@ def is_valid_email(email):
     return re.match(regex, email) is not None
 
 
-def load_user(user_id):
-    db_sess = db_session.create_session()
-    return db_sess.query(User).get(user_id)
 
 
 @app.route("/login/google")
@@ -1337,10 +1268,7 @@ def guide( ):
 def favourite_routes( ):
     return render_template("favourite_routes.html")
 
-@login_manager.user_loader
-def load_user(user_id):
-    db_sess = db_session.create_session()
-    return db_sess.query(User).get(user_id)
+
 
 @app.route('/partners')
 def partners( ):

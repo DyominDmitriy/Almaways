@@ -149,4 +149,6 @@ class Route(SqlAlchemyBase):
     image_url = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     duration = sqlalchemy.Column(sqlalchemy.Float, nullable=True)             # часы
     difficulty = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    map_embed = sqlalchemy.Column(sqlalchemy.Text, nullable=True)  
+    map_embed = sqlalchemy.Column(sqlalchemy.Text, nullable=True)
+    # ——— Делаем явную публикацию маршрута — видимость на витрине ———
+    is_published = sqlalchemy.Column(sqlalchemy.Boolean, default=True, nullable=False)
