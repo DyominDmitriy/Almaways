@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
-
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-toggle.css') }}">
   <style>
     :root{ --ink:#0B1220; --panel:#fff; --muted:#64748b; --ring:#B5CEF5; --secondary:#2E6D9C; }
     html,body{font-family:'Poppins',system-ui,sans-serif;background:#f7fbff;color:var(--ink);margin:0}
@@ -41,6 +41,7 @@
     .admin-panel.active{transform:translateX(0)}
     .admin-head{padding:12px 16px;border-bottom:1px solid #e6eef8;display:flex;align-items:center;justify-content:space-between}
     .admin-body{padding:14px 16px;display:grid;gap:12px;overflow:auto}
+    
   </style>
 </head>
 <body>
@@ -74,13 +75,12 @@
               <div class="adm-tools">
                 <button class="adm-btn" data-adm="edit" data-id="{{ r.id }}" title="Редактировать"><i class="fa-regular fa-pen-to-square"></i></button>
                 <!-- Toggle slider -->
-                <label class="toggle adm-btn" title="Вкл/выкл публикацию">
-                  <span class="muted" style="font-size:.85rem">Visible</span>
-                  <span class="switch">
-                    <input type="checkbox" data-adm="publish" data-id="{{ r.id }}" {% if r.is_published %}checked{% endif %}>
-                    <span class="slider"></span>
-                  </span>
-                </label>
+                <label class="adm-btn adm-toggle" title="Видимость">
+                    <span class="adm-switch">
+                      <input type="checkbox" class="adm-publish" data-id="{{ r.id }}" {% if r.is_published %}checked{% endif %}>
+                      <span class="knob"></span>
+                    </span>
+                  </label>
                 <button class="adm-btn" data-adm="delete" data-id="{{ r.id }}" title="Удалить"><i class="fa-regular fa-trash-can"></i></button>
               </div>
             {% endif %}
@@ -206,6 +206,19 @@
       // Первичная отрисовка (если захочешь — оставь SSR как есть)
       // fetchAndRender();
     })();
+    // внутри cardHTML, формирование блока adm:
+    var adm = isAdmin ? (
+      '<div class="adm-tools">'+
+      '  <button class="adm-btn" data-adm="edit" data-id="'+r.id+'" title="Редактировать"><i class="fa-regular fa-pen-to-square"></i></button>'+
+      '  <label class="adm-btn adm-toggle" title="Видимость">'+
+      '    <span class="adm-switch">'+
+      '      <input type="checkbox" class="adm-publish" data-id="'+r.id+'" '+(r.is_published?'checked':'')+'>'+
+      '      <span class="knob"></span>'+
+      '    </span>'+
+      '  </label>'+
+      '  <button class="adm-btn" data-adm="delete" data-id="'+r.id+'" title="Удалить"><i class="fa-regular fa-trash-can"></i></button>'+
+      '</div>'
+    ) : '';
   </script>
 
   <script src="{{ url_for('static', filename='js/cul-admin.js') }}"></script>
