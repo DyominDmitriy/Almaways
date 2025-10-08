@@ -123,3 +123,4 @@ databases/places.db
 .venv/bin/python3.11
 .venv/pyvenv.cfg
 databases/places.db
+/databases
