@@ -8,7 +8,8 @@ from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadData
 
 # Validate email format
 def is_valid_email(email: str) -> bool:
-    pattern = r'^[\w\.-]+@[\w\.-]+\\.\w+$'
+    # Исправлена регулярка (одинарный обратный слеш перед точкой домена)
+    pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
     return re.match(pattern, email) is not None
 
 # Generate and confirm email tokens
@@ -21,7 +22,6 @@ def confirm_token(token: str, expiration: int = 3600) -> str:
     return ts.loads(token, salt='email-confirm', max_age=expiration)
 
 # Send confirmation email
-
 def send_confirmation_email(email: str):
     token = generate_confirmation_token(email)
     confirm_url = url_for('confirm_email', token=token, _external=True)

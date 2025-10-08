@@ -1,126 +1,51 @@
-# Byte-compiled / optimized / DLL files
-_pycache_/
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# Python
+__pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
+.env
+.venv/
+venv/
+env/
+pip-wheel-metadata/
 *.egg-info/
-.installed.cfg
-*.egg
-
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this.txt
-
-# Unit test / coverage reports
+build/
+dist/
+.eggs/
+.pytest_cache/
+.coverage
+coverage.*
 htmlcov/
+.mypy_cache/
+.pyright/
+.ruff_cache/
 .tox/
 .nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/
-.pytest_cache/
 
-# Translations
-*.mo
-*.pot
+# Node/Web (на случай использования фронт-сборки)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.parcel-cache/
+.cache/
+.tmp/
+dist/
+build/
+coverage/
+.eslintcache
 
-# Django stuff:
+# Front-end artifacts
+*.map
+
+# Other
+logs/
 *.log
-local_settings.py
-db.sqlite3
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-.target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# pipenv
-Pipfile.lock
-
-# poetry
-poetry.lock
-
-# mypy
-.mypy_cache/
-.dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# VS Code
-.vscode/
-
-# MacOS
-.DS_Store
-
-# Virtual environment
-venv/
-ENV/
-env/
-databases/places.db
-/databases
-databases/places.db
-databases/places.db
-databases/places.db
-databases/places.db
-.env
-.venv/bin/activate
-.venv/bin/activate.csh
-.venv/bin/activate.fish
-.venv/bin/Activate.ps1
-.venv/bin/dotenv
-.venv/bin/flask
-.venv/bin/normalizer
-.venv/bin/pip
-.venv/bin/pip3
-.venv/bin/pip3.11
-.venv/bin/python
-.venv/bin/python3
-.venv/bin/python3.11
-.venv/pyvenv.cfg
-databases/places.db
-/databases
